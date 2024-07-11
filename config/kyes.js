@@ -1,5 +1,10 @@
-const {PORT} = process.env
+import dotenv from 'dotenv';
 
-module.exports = {
-    port : PORT
-}
+// Load environment variables from .env file
+dotenv.config();
+
+const { PORT, CONNECTION_URL } = process.env;
+
+// Correctly destructure and export the variables
+export const port = PORT;
+export const connectionUrl = CONNECTION_URL;
