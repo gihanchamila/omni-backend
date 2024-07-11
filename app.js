@@ -7,6 +7,8 @@ import morgan from "morgan"
 import connectMongodb from "./init/mongodb.js"
 
 import { errorHandler } from "./middlewares/errorHandler.js"
+import { notFound } from "./controllers/notfound.js"
+
 
 
 // Load environment variables
@@ -23,6 +25,15 @@ app.use(cors({origin: "http://localhost:5173"}))
 app.use(express.json({limit : "500mb"}));
 app.use(bodyParser.urlencoded({limit : "500mb", extended : true}));
 app.use(morgan("dev"))
+
+// not found controller
+app.use("*", notFound) 
+
+/* 
+    * is a wildcard in express.js 
+    It matches all the routes and then others are set to not found
+    Before this, we should set routs earlier
+*/ 
 
 // error handler middlewares
 app.use(errorHandler)
