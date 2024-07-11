@@ -1,0 +1,16 @@
+{
+  "name": "omni-backend",
+  "version": "1.0.0",
+  "description": "rest api for omni blog",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rest",
+    "api",
+    "api"
+  ],
+  "author": "Gihan Chamila",
+  "license": "ISC"
+}
