@@ -19,7 +19,7 @@ const app = express()
 app.use(cors({origin: "http://localhost:5173"}))
 app.use(express.json({limit : "500mb"}));
 app.use(bodyParser.urlencoded({limit : "500mb", extended : true}));
-app.use(morgan("dev")) // to console log req
+app.use(morgan("dev"))
 
 export default app;
 
