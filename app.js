@@ -6,9 +6,12 @@ import morgan from "morgan"
 
 import connectMongodb from "./init/mongodb.js"
 
+import { errorHandler } from "./middlewares/errorHandler.js"
+
 
 // Load environment variables
 dotenv.config()
+
 
 connectMongodb()
 
@@ -20,6 +23,9 @@ app.use(cors({origin: "http://localhost:5173"}))
 app.use(express.json({limit : "500mb"}));
 app.use(bodyParser.urlencoded({limit : "500mb", extended : true}));
 app.use(morgan("dev"))
+
+// error handler middlewares
+app.use(errorHandler)
 
 export default app;
 
