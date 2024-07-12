@@ -6,10 +6,10 @@ import morgan from "morgan"
 
 import connectMongodb from "./init/mongodb.js"
 
+import { authRoute } from "./routes/index.js"
+
 import { errorHandler } from "./middlewares/errorHandler.js"
 import { notFound } from "./controllers/notfound.js"
-
-
 
 // Load environment variables
 dotenv.config()
@@ -25,6 +25,10 @@ app.use(cors({origin: "http://localhost:5173"}))
 app.use(express.json({limit : "500mb"}));
 app.use(bodyParser.urlencoded({limit : "500mb", extended : true}));
 app.use(morgan("dev"))
+
+// route section
+
+app.use("/api/v1/auth", authRoute)
 
 // not found controller
 app.use("*", notFound) 
