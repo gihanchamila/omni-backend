@@ -1,5 +1,6 @@
 import {User} from "../models/index.js"
 import hashPassword from "../utils/hashPassword.js"
+import { comparePassword } from "../utils/comparePassword.js";
 
 const authController = {
     signup : async (req, res, next) => {
@@ -38,7 +39,13 @@ const authController = {
                 throw new Error("Invalid credentials")
             }
 
-            const match = await comparePassword
+            const match = await comparePassword(password, user.password) // user.password = hashedPassword
+            if(!match){
+                res.code = 401
+                throw new Error("Invalid credentials")
+            }
+
+            res.status(200).json({ code : 200, status : true, message : "User signin successfull"})
 
         }catch(error){
             next(error)
