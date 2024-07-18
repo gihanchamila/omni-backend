@@ -1,6 +1,7 @@
 import {User} from "../models/index.js"
 import hashPassword from "../utils/hashPassword.js"
 import { comparePassword } from "../utils/comparePassword.js";
+import { generateToken } from "../utils/generateToken.js";
 
 const authController = {
     signup : async (req, res, next) => {
@@ -45,7 +46,9 @@ const authController = {
                 throw new Error("Invalid credentials")
             }
 
-            res.status(200).json({ code : 200, status : true, message : "User signin successfull"})
+            const token = generateToken(user)
+
+            res.status(200).json({ code : 200, status : true, message : "User signin successfull",  data : {token, user}})
 
         }catch(error){
             next(error)
