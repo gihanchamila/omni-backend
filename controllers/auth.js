@@ -74,8 +74,9 @@ const authController = {
             }
 
             const code = generateCode(6)
-            user.verficationCode = code
+            user.verificationCode = code
             await user.save()
+            console.log(code)
 
             //send Email
 
@@ -87,6 +88,33 @@ const authController = {
             });
 
             res.status(200).json({code : 200, status : true, message : "User verification code sent successfully"})
+
+        }catch(error){
+            next(error)
+        }
+    },
+
+    verifyUser : async (req, res, next) => {
+        try{
+
+            const {email, code} = req.body;
+            const user = await User.findOne({email})
+
+            if(!user){
+                res.code = 404
+                throw new Error("User not found")
+            }
+
+            if(user.verificationCode !== code){
+                res.code = 404;
+                throw new Error("invalid code")
+            }
+
+            user.isVerified = true;
+            user.verificationCode = null;
+            await user.save()
+
+            res.status(200).json({code : 200, status : true, message : " User verified successfully"})
 
         }catch(error){
             next(error)

@@ -38,3 +38,15 @@ export const emailValidator = [
         .notEmpty()
         .withMessage("Email is required")
 ];
+
+export const verifyUserValidator = [
+    check("email")
+        .isEmail()
+        .withMessage("Invalid email")
+        .notEmpty()
+        .withMessage("Email is required"),
+    
+    check("code")
+        .notEmpty()
+        .withMessage("code is required")
+]
