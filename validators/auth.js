@@ -29,4 +29,12 @@ export const signinValidator = [
     check("password")
         .notEmpty()
         .withMessage("Password is required")
-]
+];
+
+export const emailValidator = [
+    check("email")
+        .isEmail()
+        .withMessage("Invalid email")
+        .notEmpty()
+        .withMessage("Email is required")
+];

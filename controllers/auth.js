@@ -2,6 +2,8 @@ import {User} from "../models/index.js"
 import hashPassword from "../utils/hashPassword.js"
 import { comparePassword } from "../utils/comparePassword.js";
 import { generateToken } from "../utils/generateToken.js";
+import { generateCode } from "../utils/generateCode.js";
+import { sendMail } from "../utils/sendEmail.js";
 
 const authController = {
     signup : async (req, res, next) => {
@@ -53,7 +55,45 @@ const authController = {
         }catch(error){
             next(error)
         }
+    },
+
+    verifyCode : async (req, res, next) => {
+        try{
+
+            const {email} = req.body;
+            const user = await User.findOne({email})
+
+            if(!user){
+                res.code = 404
+                throw new Error("User not found")
+            }
+
+            if(user.isVerified){
+                res.code = 404
+                throw new Error("User is already verified")
+            }
+
+            const code = generateCode(6)
+            user.verficationCode = code
+            await user.save()
+
+            //send Email
+
+            await sendMail({
+                emailTo : user.email,
+                subject : "Email verification code",
+                code,
+                content : "Verify your account"
+            });
+
+            res.status(200).json({code : 200, status : true, message : "User verification code sent successfully"})
+
+        }catch(error){
+            next(error)
+        }
     }
+
+    
 }
 
 export default authController
