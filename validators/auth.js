@@ -49,4 +49,22 @@ export const verifyUserValidator = [
     check("code")
         .notEmpty()
         .withMessage("code is required")
-]
+];
+
+export const recoverPasswordValidator = [
+    check("email")
+        .isEmail()
+        .withMessage("Invalid email")
+        .notEmpty()
+        .withMessage("Email is required"),
+
+    check("code")
+        .notEmpty()
+        .withMessage("code is required"),
+
+    check("password")
+        .notEmpty()
+        .withMessage("Invalid password")
+        .isLength({min : 6})
+        .withMessage("Password should be 6 characters long")
+];
