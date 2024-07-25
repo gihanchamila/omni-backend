@@ -119,8 +119,34 @@ const authController = {
         }catch(error){
             next(error)
         }
-    }
+    },
 
+    forgotPasswordCode : async (req, res, next) => {
+        try{
+            const {email} = req.body;
+            const user = await User.findOne({email})
+
+            if(!user){
+                res.code = 404;
+                throw new Error("User not found")
+            }
+
+            const code = generateCode(6)
+            user.forgotPasswordCode = code
+            await user.save()
+
+            await sendMail({
+                emailTo : user.email,
+                subject : "Forgot password code",
+                code,
+                content : "Change your password"
+            });
+
+            res.status(200).json({code : 200, status : true, message : "Forgot password sent successfully"})
+        }catch(error){
+            next(error)
+        }
+    },
     
 }
 
