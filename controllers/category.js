@@ -7,7 +7,7 @@ const categoryController = {
         try{
 
             const {title, description} = req.body;
-            const {_id} = req.User;
+            const {_id} = req.user;
 
             const isCategoryExist = await Category.findOne({title})
             if(isCategoryExist){
