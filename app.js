@@ -6,7 +6,7 @@ import morgan from "morgan"
 
 import connectMongodb from "./init/mongodb.js"
 
-import { authRoute } from "./routes/index.js"
+import { authRoute, categoryRoute } from "./routes/index.js"
 
 import { errorHandler } from "./middlewares/errorHandler.js"
 import { notFound } from "./controllers/notfound.js"
@@ -29,6 +29,7 @@ app.use(morgan("dev"))
 // route section
 
 app.use("/api/v1/auth", authRoute)
+app.use("/api/v1/category", categoryRoute)
 
 // not found controller
 app.use("*", notFound) 
