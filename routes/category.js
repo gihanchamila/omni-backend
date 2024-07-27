@@ -11,5 +11,6 @@ router.post("/", isAuth, isAdmin, addCategoryValidator, validate, categoryContro
 router.put("/:id", isAuth, isAdmin, idValidator, validate, categoryController.updateCategory)
 router.delete("/:id", isAuth, isAdmin, idValidator, validate, categoryController.deleteCategory)
 router.get("/", isAuth, categoryController.getCategories)
+router.get("/:id", isAuth, idValidator, validate, categoryController.getCategory)
   
 export default router 
