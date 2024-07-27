@@ -121,7 +121,6 @@ const categoryController = {
             const {id} = req.params
 
             const category = await Category.findById(id)
-
             if(!category){
                 res.code = 404;
                 throw new Error("Category not found")
