@@ -2,6 +2,7 @@ import path from "path"
 import { validateExtention } from "../validators/file.js"
 import { uploadFileToS3, signedUrl, deleteFilesFromS3 } from "../utils/awsS3.js"
 import File from "../models/File.js"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 const fileController = {
     uploadFile : async (req, res, next) => {
@@ -36,5 +37,18 @@ const fileController = {
         }
     },
 
-    
+    getSignedUrl : async (req, res, next) => {
+        try{
+
+            const {key} = req.query;
+            const url = await signedUrl(key)
+
+            res.status(200).json({ code : 200, status : true, message : "Get signed url successfully", data : {url}})
+
+        }catch(error){
+            next(error)
+        }
+    }
+
+
 }
