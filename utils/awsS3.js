@@ -25,4 +25,43 @@ export const uploadFileToS3 = async({file, ext}) => {
     }
 
     const command = new PutObjectCommand(params)
+
+    try{
+        await client.send(command)
+        return Key
+    }catch(error){
+        console.log(error)
+    }
+}
+
+export const signedUrl = async(Key) => {
+    const params = {
+        Bucket : awsBucketName,
+        Key
+    }
+
+    const command = await GetObjectCommand(params)
+
+    try{
+        const url = await getSignedUrl(client, command, {expiresIn : 60})
+        return url
+    }catch(error){
+        console.log(error)
+    }
+}
+
+export const deleteFilesFromS3 = async(key) => {
+    const params = {
+        Bucket : awsBucketName,
+        Key
+    }
+
+    const command = await DeleteObjectCommand(params)
+
+    try{
+        await client.send(command)
+        return
+    }catch(error){
+        consol.log(error)
+    }
 }
