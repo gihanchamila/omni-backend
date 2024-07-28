@@ -62,6 +62,6 @@ const fileController = {
             next(error)
         }
     }
-
-
 }
+
+export default fileController
