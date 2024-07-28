@@ -50,7 +50,7 @@ export const signedUrl = async(Key) => {
     }
 }
 
-export const deleteFilesFromS3 = async(key) => {
+export const deleteFilesFromS3 = async(Key) => {
     const params = {
         Bucket : awsBucketName,
         Key
