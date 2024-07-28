@@ -48,6 +48,19 @@ const fileController = {
         }catch(error){
             next(error)
         }
+    },
+
+    deleteFile : async (req, res, next) => {
+        try{
+
+            const {key} = req.query;
+            await deleteFilesFromS3(key)
+            await File.findOneAndDelete(key)
+            res.status(200).json({ code : 200, status : true, message : "File deleted successfully"})
+
+        }catch(error){
+            next(error)
+        }
     }
 
 
