@@ -14,6 +14,7 @@ router.post("/forgot-password-code", emailValidator, validate, authController.fo
 router.post("/recover-password", recoverPasswordValidator, validate, authController.recoverPassword)
 router.post("/change-password",isAuth,  changePasswordValidator, validate, authController.changePassword)
 router.post("/update-profile",isAuth, updateProfileValidator, validate, authController.updateProfilePic)
+router.get("/current-user", isAuth, authController.currentUSer)
 
 export default router
 
