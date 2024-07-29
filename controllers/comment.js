@@ -1,13 +1,11 @@
-import File from "../models/File.js";
-import User from "../models/User.js"
-import Category from "../models/Category.js"
-import Post from "../models/Post.js"
+import User from "../models/User.js";
 import Comment from "../models/Comment.js";
 
 const commentController = {
 
     addComment : async(req, res, next) => {
         try {
+            //Request content from body and postId from params
             const { content } = req.body;
             const { postId } = req.params;
 
@@ -31,7 +29,7 @@ const commentController = {
             const { commentId, postId } = req.params;
 
             // Find the parent comment
-            const parentComment = await Comment.findById(commentId).populate('user', 'name');
+            const parentComment = await Comment.findById(commentId).populate("user", "name")
             if (!parentComment) {
                 return res.status(404).json({ message: 'Parent comment not found' });
             }
@@ -58,8 +56,23 @@ const commentController = {
         } catch (error) {
             next(error)
         }
-    }
+    },
 
+    getComments : async (req, res) => {
+        try {
+            const { postId } = req.params;
+            const comments = await Comment.find({ post: postId, parentComment: null })
+                .populate('user', 'username')
+                .populate({
+                    path: 'replies',
+                    populate: { path: 'user', select: 'username' }
+                });
+    
+            res.status(200).json(comments);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
 
 export default commentController
