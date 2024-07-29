@@ -10,6 +10,7 @@ router.post("/", isAuth, addPostValidator, validate, postController.addPost)
 router.put("/update-post", isAuth, updatePostValidator, validate, postController.updatePost)
 router.get("/", isAuth, postController.getPosts)
 router.get("/:id", isAuth, idValidator, validate, postController.getPost)
+router.delete("/:id", isAuth, idValidator, validate, postController.deletePost)
 
 
 export default router

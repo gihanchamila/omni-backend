@@ -82,7 +82,7 @@ const postController = {
     getPosts : async(req, res, next) => {
         try {
 
-            const {size, q, page, category} = req.query;
+            const {size, q, page, category} = req.query; // ?category
 
             const pageNumber = parseInt(page) || 1
             const sizeNumber = parseInt(size) || 10
@@ -134,6 +134,23 @@ const postController = {
             }
 
             res.status(200).json({ code : 200, status : true, message : "Post founded successfully", data : {post}})
+        } catch (error) {
+            next(error)
+        }
+    },
+
+    deletePost : async(req, res, next) => {
+        try {
+            const {id} = req.params; // :id
+            const post = await Post.findById(id)
+            if(!post){
+                res.code = 404;
+                throw new Error("Posts not found")
+            }
+    
+            await Post.findByIdAndDelete(id)
+            res.status(200).json({code : 200, status : true, message : "Post deleted successfully"})
+
         } catch (error) {
             next(error)
         }
