@@ -40,7 +40,7 @@ export const signedUrl = async(Key) => {
         Key
     }
 
-    const command = await GetObjectCommand(params)
+    const command = new GetObjectCommand(params)
 
     try{
         const url = await getSignedUrl(client, command, {expiresIn : 60})
@@ -56,7 +56,7 @@ export const deleteFilesFromS3 = async(Key) => {
         Key
     }
 
-    const command = await DeleteObjectCommand(params)
+    const command = new DeleteObjectCommand(params)
 
     try{
         await client.send(command)

@@ -56,8 +56,18 @@ const fileController = {
         try{
 
             const {key} = req.query;
+            if(!key){
+                res.code = 404;
+                throw new Error("Key not found")
+            }
             await deleteFilesFromS3(key)
-            await File.findOneAndDelete(key)
+            const file = await File.findOneAndDelete(key);
+
+            if(!file){
+                res.code = 404;
+                throw new Error("File not found")
+            }
+
             res.status(200).json({ code : 200, status : true, message : "File deleted successfully"})
 
         }catch(error){
