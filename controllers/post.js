@@ -28,8 +28,8 @@ const postController = {
                 title, description, file, category, updatedBy : _id
             })
 
-            const savedPoast = await newPost.save()
-            res.status(201).json({code : 201, status : true, message : "Post added successfully", data : savedPoast})
+            const savedPost = await newPost.save()
+            res.status(201).json({code : 201, status : true, message : "Post added successfully", data : savedPost})
 
         }catch(error){
             next(error)
