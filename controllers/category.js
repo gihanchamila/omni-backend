@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Category from "../models/Category.js"
+import Post from "../models/Post.js";
 
 const categoryController = {
 
