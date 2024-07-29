@@ -5,7 +5,6 @@ import upload from "../middlewares/upload.js"
 
 const router = express.Router()
 
-router.post("/upload", isAuth, upload.single("image", fileController.uploadFile))
-
+router.post("/upload", isAuth, upload.single("image"), fileController.uploadFile)
 
 export default router

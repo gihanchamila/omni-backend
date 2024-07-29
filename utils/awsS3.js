@@ -13,7 +13,7 @@ const client = new S3Client({
 
 export const uploadFileToS3 = async({file, ext}) => {
     // Generate random number 
-    const Key = `${generateCode(12)}_${Date.now()}_${ext}`
+    const Key = `${generateCode(12)}_${Date.now()}${ext}`
 
     const params = {
         // all the keys that are start with param object is capitalized

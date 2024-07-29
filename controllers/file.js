@@ -30,8 +30,10 @@ const fileController = {
                     mimetype : file.mimetype,
                     createdBy : req.user._id
                 })
+                await newFile.save()
+                res.status(201).json({ code : 201, status : true, message : "File uploaded successfully", data : { key, id: newFile._id}})
             }
-
+            
         }catch(error){
             next(error)
         }
