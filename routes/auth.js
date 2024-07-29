@@ -2,7 +2,7 @@ import express from "express"
 import { authController} from "../controllers/index.js"
 import { signupValidator, signinValidator, verifyUserValidator, emailValidator, recoverPasswordValidator, changePasswordValidator, updateProfileValidator } from "../validators/auth.js"
 import { validate } from "../validators/validate.js"
-import isAuth from "../middlewares/isAuth.js"
+import {isAuth} from "../middlewares/isAuth.js"
 
 const router = express.Router()
 
@@ -12,8 +12,8 @@ router.post("/send-verification-email", emailValidator, validate, authController
 router.post("/verify-user", verifyUserValidator, validate, authController.verifyUser)
 router.post("/forgot-password-code", emailValidator, validate, authController.forgotPasswordCode)
 router.post("/recover-password", recoverPasswordValidator, validate, authController.recoverPassword)
-router.post("/change-password",isAuth,  changePasswordValidator, validate, authController.changePassword)
-router.post("/update-profile",isAuth, updateProfileValidator, validate, authController.updateProfilePic)
+router.put("/change-password",isAuth,  changePasswordValidator, validate, authController.changePassword)
+router.put("/update-profile",isAuth, updateProfileValidator, validate, authController.updateProfilePic)
 router.get("/current-user", isAuth, authController.currentUSer)
 
 export default router

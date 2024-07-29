@@ -16,6 +16,10 @@ export const signupValidator = [
         .withMessage("Invalid password")
         .isLength({min : 6})
         .withMessage("Password should be 6 characters long")
+        .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter')
+        .matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter')
+        .matches(/\d/).withMessage('Password must contain at least one number')
+        .matches(/[^A-Za-z0-9]/).withMessage('Password must contain at least one symbol')
 
 ];
 
@@ -67,6 +71,10 @@ export const recoverPasswordValidator = [
         .withMessage("Invalid password")
         .isLength({min : 6})
         .withMessage("Password should be 6 characters long")
+        .matches(/[A-Z]/).withMessage("Password must contain at least one uppercase letter")
+        .matches(/[a-z]/).withMessage("Password must contain at least one lowercase letter")
+        .matches(/\d/).withMessage("Password must contain at least one number")
+        .matches(/[^A-Za-z0-9]/).withMessage("Password must contain at least one symbol")
 ];
 
 export const changePasswordValidator = [
@@ -77,6 +85,10 @@ export const changePasswordValidator = [
     check("newPassword")
         .notEmpty()
         .withMessage("New password is required")
+        .matches(/[A-Z]/).withMessage("New password must contain at least one uppercase letter")
+        .matches(/[a-z]/).withMessage("New password must contain at least one lowercase letter")
+        .matches(/\d/).withMessage("New password must contain at least one number")
+        .matches(/[^A-Za-z0-9]/).withMessage("New password must contain at least one symbol")
 ];
 
 export const updateProfileValidator = [
