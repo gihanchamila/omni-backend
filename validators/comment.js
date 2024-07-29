@@ -26,3 +26,8 @@ export const replyCommentValidate = [
     param('postId')
         .isMongoId().withMessage('Invalid post ID')
 ];
+
+export const getCommentsValidate = [
+    param('postId')
+        .isMongoId().withMessage('Invalid post ID')
+]
