@@ -8,6 +8,7 @@ const router = express.Router()
 
 router.post("/", isAuth, addPostValidator, validate, postController.addPost)
 router.put("/update-post", isAuth, updatePostValidator, validate, postController.updatePost)
+router.get("/", isAuth, postController.getPosts)
 
 
 export default router

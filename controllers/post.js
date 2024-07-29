@@ -118,7 +118,16 @@ const postController = {
         } catch (error) {
             next(error)
         }
+    },
+
+    getPost : async(req, res, next) => {
+        try {
+            
+        } catch (error) {
+            next(error)
+        }
     }
+
 }
 
 export default postController
