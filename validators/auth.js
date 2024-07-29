@@ -68,3 +68,30 @@ export const recoverPasswordValidator = [
         .isLength({min : 6})
         .withMessage("Password should be 6 characters long")
 ];
+
+export const changePasswordValidator = [
+    check("oldPassword")
+        .notEmpty()
+        .withMessage("Old password is required"),
+
+    check("newPassword")
+        .notEmpty()
+        .withMessage("New password is required")
+];
+
+export const updateProfileValidator = [
+    check("email").custom(async (email) => {
+        if(email){
+            const isValidEmail = validateEmail(email)
+            if(!isValidEmail){
+                throw "Invalid email"
+            }
+        }
+    }),
+
+    check("profilePic").custom(async (profilePic) => {
+        if(profilePic && !mongoose.Types.ObjectId.isValid(profilePic)){
+            throw "Invalid profile picture"
+        }
+    })
+];
