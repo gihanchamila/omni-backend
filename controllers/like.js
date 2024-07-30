@@ -25,7 +25,7 @@ const likeController = {
             await post.save();
             await like.save();
 
-            res.status(201).json({ message: 'Post liked', like });
+            res.status(201).json({code : 201, status : true, message: 'Post liked', data : {like}});
         } catch (error) {
             next(error)
         }
