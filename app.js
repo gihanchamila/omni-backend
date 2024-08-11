@@ -33,7 +33,7 @@ app.use("/api/v1/category", categoryRoute)
 app.use("/api/v1/file", fileRoute)
 app.use("/api/v1/posts", postRoute)
 app.use("/api/v1/comments", commentRoute)
-app.use("/api/v1/like", likeRoute)
+app.use("/api/v1/likes", likeRoute)
 
 // not found controller
 app.use("*", notFound) 

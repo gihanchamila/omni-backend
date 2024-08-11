@@ -36,8 +36,8 @@ export const updatePostValidator = [
 
 export const idValidator = [
     param("id").custom(async (id) => {
-        if(id && !mongoose.Types.ObjectId.isValid(id)){
-            throw "Invalid post id"
+        if (id && !mongoose.Types.ObjectId.isValid(id)) {
+            throw new Error("Invalid post Id");  // Use Error for throwing
         }
     })
-]
+];

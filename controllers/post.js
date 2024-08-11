@@ -154,6 +154,27 @@ const postController = {
         } catch (error) {
             next(error)
         }
+    },
+
+    latestPost : async (req, res, next) => {
+        try {
+            const latestPosts = await Post.find()
+                .sort({ createdAt: -1 })
+                .limit(3)
+                .populate('file') // Populate if you need details from the file reference
+                .populate('comment') // Populate if you need details from the comment reference
+                .populate('category') // Populate if you need details from the category reference
+                .populate('updatedBy'); // Populate if you need details from the user reference
+    
+            res.status(200).json({
+                code: 200,
+                status: true,
+                message: "Latest posts fetched successfully",
+                data: latestPosts
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
 }
