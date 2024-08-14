@@ -86,35 +86,47 @@ const categoryController = {
         }
     },
 
-    getCategories : async (req, res, next) => {
-        try{
-
-            // Extract query parameters from the request
-            const {q, size, page} = req.query;
-            let query = {}
-
-            // Parse size and page parameters or set default values
-            const sizeNumber = parseInt(size) || 10
-            const pageNumber = parseInt(page) || 1
-
-            if(q){
-                const search = RegExp(q, "i")
-                // Construct a query object to search for the title or description fields
-                query = { $or :[{title : search}, {description : search}]}
-            }
-
-            const total = await Category.countDocuments(query)
-            const pages = Math.ceil(total / sizeNumber)
-
-             // Retrieve the categories from the database with pagination and sorting
-            const categories = await Category.find(query).skip((pageNumber -1)* sizeNumber).limit(sizeNumber).sort({updatedBy : -1})
-
-            res.status(200).json({code : 200, status : true, message : "Get category list successfully", data : {categories, total, pages}})
-
-        }catch(error){
-            next(error)
+    getCategories: async (req, res, next) => {
+        try {
+          // Extract query parameters from the request
+          const { q, size, page, sortField, sortOrder } = req.query;
+          let query = {};
+      
+          // Parse size and page parameters or set default values
+          const sizeNumber = parseInt(size) || 10;
+          const pageNumber = parseInt(page) || 1;
+      
+          if (q) {
+            const search = RegExp(q, "i");
+            // Construct a query object to search for the title or description fields
+            query = { $or: [{ title: search }, { description: search }] };
+          }
+      
+          // Determine sort field and order
+          const sort = {};
+          if (sortField) {
+            sort[sortField] = sortOrder === 'asc' ? 1 : -1;
+          }
+      
+          const total = await Category.countDocuments(query);
+          const pages = Math.ceil(total / sizeNumber);
+      
+          // Retrieve the categories from the database with pagination and sorting
+          const categories = await Category.find(query)
+            .skip((pageNumber - 1) * sizeNumber)
+            .limit(sizeNumber)
+            .sort(sort);
+      
+          res.status(200).json({
+            code: 200,
+            status: true,
+            message: "Get category list successfully",
+            data: { categories, total, pages }
+          });
+        } catch (error) {
+          next(error);
         }
-    },
+      },
 
     getCategory : async (req, res, next) => {
         try{

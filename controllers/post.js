@@ -28,8 +28,8 @@ const postController = {
                 title, description, file, category, updatedBy : _id
             })
 
-            const savedPoast = await newPost.save()
-            res.status(201).json({code : 201, status : true, message : "Post added successfully", data : savedPoast})
+            const savedPost = await newPost.save()
+            res.status(201).json({code : 201, status : true, message : "Post added successfully", data : savedPost})
 
         }catch(error){
             next(error)
@@ -151,6 +151,44 @@ const postController = {
             await Post.findByIdAndDelete(id)
             res.status(200).json({code : 200, status : true, message : "Post deleted successfully"})
 
+        } catch (error) {
+            next(error)
+        }
+    },
+
+    latestPost : async (req, res, next) => {
+        try {
+            const latestPosts = await Post.find()
+                .sort({ createdAt: -1 })
+                .limit(2)
+                .populate('file') // Populate if you need details from the file reference
+                .populate('comment') // Populate if you need details from the comment reference
+                .populate('category') // Populate if you need details from the category reference
+                .populate('updatedBy'); // Populate if you need details from the user reference
+    
+            res.status(200).json({
+                code: 200,
+                status: true,
+                message: "Latest posts fetched successfully",
+                data: latestPosts
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    popularPost : async (req, res, next) => {
+        try {
+            const popularPosts = await Post.find()
+            .sort({likesCount : "desc"})
+            .limit(3)
+            .populate('file') // Populate if you need details from the file reference
+            .populate('comment') // Populate if you need details from the comment reference
+            .populate('category') // Populate if you need details from the category reference
+            .populate('updatedBy'); // Populate if you need details from the user reference
+
+            res.status(200).json({code : 200, status : true, message : "Popular posts successfully loaded", data : popularPosts})
+            
         } catch (error) {
             next(error)
         }
