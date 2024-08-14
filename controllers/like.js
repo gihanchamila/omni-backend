@@ -1,45 +1,70 @@
 import Comment from "../models/Comment.js";
 import Like from "../models/Like.js";
 import Post from "../models/Post.js";
+import mongoose from "mongoose";
 
 const likeController = {
 
-    likePost: async (req, res, next) => {
-        try {
-          const { postId } = req.params;
-          const existingLike = await Like.findOne({ user: req.user._id, post: postId });
-          
-          if (existingLike) {
-            return res.status(400).json({ message: "You already liked this post" });
-          }
-          const like = new Like({ user: req.user._id, post: postId });
-          await like.save();
+  likePost: async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     
-          const post = await Post.findById(postId);
-          post.likesCount += 1;
-          await post.save();
-    
-          res.status(201).json({ code: 201, status: true, message: "Post liked", data: { like } });
-        } catch (error) {
-          next(error);
+    try {
+        const { postId } = req.params;
+        const existingLike = await Like.findOne({ user: req.user._id, post: postId }).session(session);
+        
+        if (existingLike) {
+            await session.abortTransaction();
+            return res.status(400).json({ message: "You have already liked this post" });
         }
-      },
+
+        const like = new Like({ user: req.user._id, post: postId });
+        await like.save({ session });
+
+        const post = await Post.findById(postId).session(session);
+
+        if (post) {
+            post.likesCount += 1;
+            await post.save({ session });
+        }
+
+        await session.commitTransaction();
+        res.status(201).json({ code: 201, status: true, message: "Post liked", data: { like } });
+    } catch (error) {
+        await session.abortTransaction();
+        next(error);
+    } finally {
+        session.endSession();
+    }
+},
+
+unLikePost: async (req, res, next) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     
-    unLikePost: async (req, res, next) => {
-        try {
-            const { postId } = req.params;
-            const like = await Like.findOneAndDelete({ user: req.user._id, post: postId });
-            if (!like) {
+    try {
+        const { postId } = req.params;
+        const like = await Like.findOneAndDelete({ user: req.user._id, post: postId }).session(session);
+
+        if (!like) {
+            await session.abortTransaction();
             return res.status(400).json({ message: "You have not liked this post" });
-            }
+        }
 
-            const post = await Post.findById(postId);
+        const post = await Post.findById(postId).session(session);
+
+        if (post && post.likesCount > 0) {
             post.likesCount -= 1;
-            await post.save();
+            await post.save({ session });
+        }
 
+        await session.commitTransaction();
             res.status(200).json({ code: 200, status: true, message: "Post unliked" });
         } catch (error) {
+            await session.abortTransaction();
             next(error);
+        } finally {
+        session.endSession();
         }
     },
 

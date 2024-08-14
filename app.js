@@ -4,6 +4,8 @@ import dotenv from "dotenv"
 import bodyParser from "body-parser"
 import morgan from "morgan"
 
+//Morgan logs HTTP requests for monitoring and debugging.
+
 import connectMongodb from "./init/mongodb.js"
 
 import { authRoute, categoryRoute, commentRoute, fileRoute, likeRoute, postRoute } from "./routes/index.js"

@@ -160,7 +160,7 @@ const postController = {
         try {
             const latestPosts = await Post.find()
                 .sort({ createdAt: -1 })
-                .limit(3)
+                .limit(2)
                 .populate('file') // Populate if you need details from the file reference
                 .populate('comment') // Populate if you need details from the comment reference
                 .populate('category') // Populate if you need details from the category reference
@@ -174,6 +174,23 @@ const postController = {
             });
         } catch (error) {
             next(error);
+        }
+    },
+
+    popularPost : async (req, res, next) => {
+        try {
+            const popularPosts = await Post.find()
+            .sort({likesCount : "desc"})
+            .limit(3)
+            .populate('file') // Populate if you need details from the file reference
+            .populate('comment') // Populate if you need details from the comment reference
+            .populate('category') // Populate if you need details from the category reference
+            .populate('updatedBy'); // Populate if you need details from the user reference
+
+            res.status(200).json({code : 200, status : true, message : "Popular posts successfully loaded", data : popularPosts})
+            
+        } catch (error) {
+            next(error)
         }
     }
 
