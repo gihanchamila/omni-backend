@@ -11,8 +11,9 @@ const commentController = {
 
             const comment = new Comment({
                 content,
-                user: req.user._id,
-                post: postId
+                author: req.user._id,
+                postId,
+                author : req.user._id
             });
 
             await comment.save();
@@ -23,49 +24,54 @@ const commentController = {
         }
     },
 
-    replyToComment : async (req, res, next) => {
+    replyToComment: async (req, res, next) => {
         try {
             const { content } = req.body;
             const { commentId, postId } = req.params;
-
-            // Find the parent comment
-            const parentComment = await Comment.findById(commentId).populate("user", "name")
+    
+            const parentComment = await Comment.findById(commentId).populate({
+                path: 'replies',
+                populate: { path: 'author', select: 'name' }
+            });
+    
             if (!parentComment) {
                 return res.status(404).json({ message: 'Parent comment not found' });
             }
-
-            // Find the author of the parent comment
-            const parentAuthor = parentComment.user;
+    
+            const parentAuthor = await User.findById(parentComment.author);  // Fetch the author details
+    
+            if (!parentAuthor) {
+                return res.status(404).json({ message: 'Parent author not found' });
+            }
+    
             const mention = `@${parentAuthor.name}`;
-
-            // Create the reply
+    
             const reply = new Comment({
                 content: `${mention} ${content}`,
-                user: req.user._id,
-                post: postId,
+                author: req.user._id,  // Use 'author' instead of 'user'
+                postId,
                 parentComment: commentId,
                 mentions: [parentAuthor._id]
             });
-
-            // Save the reply and update the parent comment
+    
             parentComment.replies.push(reply._id);
             await parentComment.save();
             await reply.save();
-
-            res.status(201).json({ code : 201, status : true,  message: 'Reply added', data : {reply} });
+    
+            res.status(201).json({ code: 201, status: true, message: 'Reply added', data: { reply } });
         } catch (error) {
-            next(error)
+            next(error);
         }
     },
 
     getComments : async (req, res) => {
         try {
             const { postId } = req.params;
-            const comments = await Comment.find({ post: postId, parentComment: null })
-                .populate('user', 'username')
+            const comments = await Comment.find({postId, parentComment: null })
+                .populate('author', 'name')
                 .populate({
                     path: 'replies',
-                    populate: { path: 'user', select: 'username' }
+                    populate: { path: 'author', select: 'name' }
                 });
     
             res.status(200).json(comments);
