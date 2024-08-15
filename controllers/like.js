@@ -27,7 +27,6 @@ const likeController = {
             post.likesCount += 1;
             await post.save({ session });
         }
-
         await session.commitTransaction();
         res.status(201).json({ code: 201, status: true, message: "Post liked", data: { like } });
     } catch (error) {
@@ -59,7 +58,7 @@ unLikePost: async (req, res, next) => {
         }
 
         await session.commitTransaction();
-            res.status(200).json({ code: 200, status: true, message: "Post unliked" });
+        res.status(200).json({ code: 200, status: true, message: "Post unliked",data: {like}});
         } catch (error) {
             await session.abortTransaction();
             next(error);
