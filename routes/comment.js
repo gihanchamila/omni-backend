@@ -11,5 +11,7 @@ router.use(limiter)
 router.post("/:postId", isAuth, limiter, commentValidator, validate, commentController.addComment)
 router.post("/:postId/reply/:commentId", isAuth, limiter, replyCommentValidate, validate, commentController.replyToComment )
 router.get("/:postId", isAuth, getCommentsValidate, validate, commentController.getComments)
+router.post('/:postId/:commentId/reply/:replyId',isAuth, limiter, replyCommentValidate, validate, commentController.replyToReply);
+router.delete('/:commentId', isAuth, commentController.deleteComment)
 
 export default router

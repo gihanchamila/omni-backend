@@ -127,7 +127,11 @@ const postController = {
             const post = await Post.findById(id).populate("file").populate("category").populate({
                 path: "updatedBy",
                 select: "-password -verificationCode -forgotPasswordCode"
-            }) 
+            })
+            .populate({
+                path : "author",
+                select : "-password -verificationCode -forgotPasswordCode"
+            })
             if(!post){
                 res.code = 404;
                 throw new Error("Post not found")
