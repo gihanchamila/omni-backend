@@ -152,7 +152,6 @@ const postController = {
                 throw new Error("Posts not found")
             }
 
-            if(post.)
     
             await Post.findByIdAndDelete(id)
             res.status(200).json({code : 200, status : true, message : "Post deleted successfully"})
