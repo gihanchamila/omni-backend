@@ -81,12 +81,12 @@ const commentController = {
         }
     },
 
-    replyToReply : async (req, res, next) => {
+    replyToReply: async (req, res, next) => {
         try {
             const { content } = req.body;
             const { postId, commentId, replyId } = req.params;
     
-            // Find and populate the parent reply
+            // Find the parent reply
             const parentReply = await Comment.findById(replyId)
                 .populate('author', 'name')
                 .populate('replies')
@@ -100,71 +100,90 @@ const commentController = {
             }
     
             // Find the parent author
-            const parentAuthor = await User.findById(parentReply.author);
-    
+            const parentAuthor = parentReply.author;
             if (!parentAuthor) {
                 return res.status(404).json({ message: 'Parent author not found' });
             }
     
+            // Mention the original reply's author in the new reply
             const mention = `@${parentAuthor.name}`;
     
-            // Create a new reply
+            // Create the new nested reply
             const reply = new Comment({
                 content: `${mention} ${content}`,
                 author: req.user._id,
                 postId,
-                parentComment: commentId,
-                replies: [replyId], // Add the ID of the reply being replied to
+                parentComment: commentId, // The original top-level comment
+                parentReply: replyId, // The reply being replied to
                 mentions: [parentAuthor._id]
             });
     
-            // Save the reply and add it to the parent reply
+            // Save the new reply and add it to the parent reply's replies
             await reply.save();
             parentReply.replies.push(reply._id);
             await parentReply.save();
     
-            // Populate author for the reply before sending it
-            const populatedReply = await Comment.findById(reply._id).populate('author', 'name');
+            // Populate the author for the reply before sending it
+            const populatedReply = await Comment.findById(reply._id)
+                .populate('author', 'name');
     
             res.status(201).json({
                 code: 201,
                 status: true,
                 message: 'Reply added',
-                data: { reply: populatedReply }
+                data: {
+                    reply: populatedReply,
+                    parentAuthor: parentAuthor.name // Adding parent author name to the response
+                }
+            })
+        } catch (error) {
+            next(error)
+        }
+    },
+    
+    getComments: async (req, res, next) => {
+        try {
+            const { postId } = req.params;
+            const comments = await Comment.find({ postId, parentComment: null })
+                .populate('author', 'name')
+                .populate({
+                    path: 'replies',
+                    populate: [
+                        {
+                            path: 'author',
+                            select: 'name'
+                        },
+                        {
+                            path: 'replies', // This will populate the nested replies
+                            populate: {
+                                path: 'author',
+                                select: 'name'
+                            }
+                        }
+                    ]
+                })
+                .sort({ createdAt: -1 });
+    
+            res.status(200).json({
+                code: 200,
+                status: true,
+                message: "Comments loaded successfully",
+                data: comments
             });
         } catch (error) {
             next(error);
         }
     },
     
-    
-
-    getComments : async (req, res) => {
-        try {
-            const { postId } = req.params;
-            const comments = await Comment.find({postId, parentComment: null })
-                .populate('author', 'name')
-                .populate({
-                    path: 'replies',
-                    populate: { path: 'author', select: 'name' }
-
-                })
-                .sort({ createdAt: -1 });
-
-                
-    
-            res.status(200).json({code : 200, status : true, message : "Comments loaded successfully", data : comments});
-        } catch (error) {
-            next(error)
-        }
-    },
-
-    deleteComment : async (req, res) => {
+    deleteComment : async (req, res, next) => {
         try{
 
             const {commentId} = req.params;
-            
             const comment = await Comment.findById(commentId)
+
+            if (comment.author.toString() !== req.user._id) {
+                return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot delete this comment" });
+            }
 
             if(!comment){
                 return res.status(404).json({code : 404, status : false, message: "Comment not found"})
