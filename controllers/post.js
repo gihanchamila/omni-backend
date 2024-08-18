@@ -2,6 +2,7 @@ import File from "../models/File.js";
 import User from "../models/User.js"
 import Category from "../models/Category.js"
 import Post from "../models/Post.js"
+import Comment from "../models/Comment.js";
 
 const postController = {
     addPost : async (req, res, next) => {
@@ -106,6 +107,7 @@ const postController = {
             const pages = Math.ceil(total / sizeNumber)
 
             const posts = await Post.find(query)
+            .populate('author')
             .populate("file")
             .populate("category")
             .select("-password -verificationCode -forgotPasswordCode")
@@ -151,6 +153,12 @@ const postController = {
                 res.code = 404;
                 throw new Error("Posts not found")
             }
+
+            /*
+            if(post.author.toString() !== req.user._id){
+                return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot delete this comment" });
+            }
+            */
 
     
             await Post.findByIdAndDelete(id)

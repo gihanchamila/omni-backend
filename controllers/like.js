@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 
 const likeController = {
 
-  likePost: async (req, res, next) => {
+    likePost: async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     
@@ -35,9 +35,9 @@ const likeController = {
     } finally {
         session.endSession();
     }
-},
+    },
 
-unLikePost: async (req, res, next) => {
+    unLikePost: async (req, res, next) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     
@@ -76,7 +76,7 @@ unLikePost: async (req, res, next) => {
           console.error('Error fetching liked posts:', error); // More detailed logging
           next(error);
         }
-      },
+    },
 
     likeComment : async(req, res, next) => {
         try {
@@ -113,7 +113,7 @@ unLikePost: async (req, res, next) => {
         } catch (error) {
             next(error)
         }
-    }
+    },
 
 }
 
