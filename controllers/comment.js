@@ -161,14 +161,21 @@ const commentController = {
                 })
                 .sort({ createdAt: -1 });
     
-            res.status(200).json({
-                code: 200,
-                status: true,
-                message: "Comments loaded successfully",
-                data: comments
-            });
+            res.status(200).json({ code: 200, status: true, message: "Comments loaded successfully", data: comments});
         } catch (error) {
             next(error);
+        }
+    },
+
+    getCommentCount : async (req, res, next) => {
+        try{
+
+            const { postId } = req.params;
+            const count = await Post.findById(postId).select('commentCount')
+            res.status(200).json({ code: 200, status: true, message: "Comments count loaded successfully", data: {count}});
+
+        }catch(error){
+            next(error)
         }
     },
     
@@ -201,7 +208,7 @@ const commentController = {
         }catch(error){
             next(error)
         }
-    }
+    },
 }
 
 export default commentController
