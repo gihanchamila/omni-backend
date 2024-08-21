@@ -1,3 +1,4 @@
+import { io } from "../index.js";
 import Comment from "../models/Comment.js";
 import Like from "../models/Like.js";
 import Post from "../models/Post.js";
@@ -6,6 +7,7 @@ import mongoose from "mongoose";
 const likeController = {
 
     likePost: async (req, res, next) => {
+
     const session = await mongoose.startSession();
     session.startTransaction();
     
@@ -38,6 +40,7 @@ const likeController = {
     },
 
     unLikePost: async (req, res, next) => {
+
     const session = await mongoose.startSession();
     session.startTransaction();
     
@@ -58,6 +61,7 @@ const likeController = {
         }
 
         await session.commitTransaction();
+        
         res.status(200).json({ code: 200, status: true, message: "Post unliked",data: {like}});
         } catch (error) {
             await session.abortTransaction();

@@ -7,7 +7,7 @@ import postController from "../controllers/post.js"
 const router = express.Router()
 
 router.post("/", isAuth, addPostValidator, validate, postController.addPost)
-router.put("/update-post", isAuth, updatePostValidator, validate, postController.updatePost)
+router.put("/:id", isAuth, updatePostValidator, validate, postController.updatePost)
 router.get("/", isAuth, postController.getPosts)
 router.get("/:id", isAuth, idValidator, validate, postController.getPost)
 router.get("/features/latest-posts", isAuth, postController.latestPost)

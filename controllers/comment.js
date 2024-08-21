@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
+import { io } from "../index.js";
 
 const commentController = {
 
@@ -22,6 +23,12 @@ const commentController = {
             .populate('author', 'name') // Replace 'name' with other fields if needed
             .exec();
             await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } });
+
+            io.emit('commentAdd', {
+                postId,
+                populatedComment
+            });
+            
             res.status(201).json({code : 201, status : true, message: 'Comment added', data : populatedComment });
         } catch (error) {
             next(error)
@@ -32,8 +39,7 @@ const commentController = {
         try {
             const { content } = req.body;
             const { commentId, postId } = req.params;
-    
-            // Find and populate the parent comment
+
             const parentComment = await Comment.findById(commentId)
                 .populate('author', 'name')
                 .populate({
@@ -44,8 +50,7 @@ const commentController = {
             if (!parentComment) {
                 return res.status(404).json({ message: 'Parent comment not found' });
             }
-    
-            // Find the parent author
+
             const parentAuthor = await User.findById(parentComment.author);
     
             if (!parentAuthor) {
@@ -54,8 +59,6 @@ const commentController = {
     
             const mention = `@${parentAuthor.name}`;
             
-    
-            // Create a new reply
             const reply = new Comment({
                 content: `${mention} ${content}`,
                 author: req.user._id,
@@ -64,21 +67,18 @@ const commentController = {
                 mentions: [parentAuthor._id]
             });
     
-            // Save the reply and add it to the parent comment
             await reply.save();
             parentComment.replies.push(reply._id);
             await parentComment.save();
     
-            // Populate author for the reply before sending it
             const populatedReply = await Comment.findById(reply._id).populate('author', 'name');
-            await Post.findByIdAndUpdate(parentComment.postId, { $inc: { commentCount: 1 } });    
-            res.status(201).json({
-                code: 201,
-                status: true,
-                message: 'Reply added',
-                data: { reply: populatedReply }
-            });
-        } catch (error) {
+            await Post.findByIdAndUpdate(parentComment.postId, { $inc: { commentCount: 1 } }); 
+            io.emit('replyAdd', {
+                postId,
+                reply
+            });   
+            res.status(201).json({code: 201,status: true,message: 'Reply added',data: { reply: populatedReply }});
+            }catch (error) {
             next(error);
         }
     },
@@ -87,8 +87,7 @@ const commentController = {
         try {
             const { content } = req.body;
             const { postId, commentId, replyId } = req.params;
-    
-            // Find the parent reply
+
             const parentReply = await Comment.findById(replyId)
                 .populate('author', 'name')
                 .populate('replies')
@@ -101,16 +100,13 @@ const commentController = {
                 return res.status(404).json({ message: 'Parent reply not found' });
             }
     
-            // Find the parent author
             const parentAuthor = parentReply.author;
             if (!parentAuthor) {
                 return res.status(404).json({ message: 'Parent author not found' });
             }
     
-            // Mention the original reply's author in the new reply
             const mention = `@${parentAuthor.name}`;
-    
-            // Create the new nested reply
+
             const reply = new Comment({
                 content: `${mention} ${content}`,
                 author: req.user._id,
@@ -130,6 +126,10 @@ const commentController = {
                 .populate('author', 'name');
             
             await Post.findByIdAndUpdate(parentReply.postId, { $inc: { commentCount: 1 } });
+            io.emit('nestedReplyAdd', {
+                postId,
+                reply
+            });
             res.status(201).json({ code: 201, status: true, message: 'Reply added', data: { reply: populatedReply, parentAuthor: parentAuthor.name // Adding parent author name to the response
                 }
             })
@@ -185,11 +185,9 @@ const commentController = {
             const {commentId} = req.params;
             const comment = await Comment.findById(commentId)
 
-            /*
             if (comment.author.toString() !== req.user._id) {
                 return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot delete this comment" });
             }
-            */
 
             if(!comment){
                 return res.status(404).json({code : 404, status : false, message: "Comment not found"})
@@ -204,6 +202,9 @@ const commentController = {
             await Comment.deleteMany({ parentComment: comment._id });
             await comment.deleteOne();
             await Post.findByIdAndUpdate(comment.postId, { $inc: { commentCount: -1 } });
+            io.emit('commentRemove', {
+                postId: comment.postId
+            });
             res.status(200).json({ code: 200, status: true, message: 'Comment deleted' });
         }catch(error){
             next(error)

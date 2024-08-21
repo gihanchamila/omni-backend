@@ -3,13 +3,24 @@ import User from "../models/User.js"
 import Category from "../models/Category.js"
 import Post from "../models/Post.js"
 import Comment from "../models/Comment.js";
+import sanitizeHtml from 'sanitize-html';
 
 const postController = {
     addPost : async (req, res, next) => {
         try{
 
             const {title, description, file, category} = req.body;
-            const {_id} = req.user;
+            const {_id, author} = req.user;
+
+            console.log(req.user)
+
+            const sanitizedDescription = sanitizeHtml(description, {
+                allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2']),
+                allowedAttributes: {
+                  '*': ['style'],
+                  'img': ['src', 'alt'],
+                },
+              });
 
             if(file){
                 const isFileExist = await File.findById(file)
@@ -26,7 +37,7 @@ const postController = {
             }
 
             const newPost = new Post({
-                title, description, file, category, updatedBy : _id
+                title, description : sanitizedDescription, file, category, updatedBy : _id, author : _id
             })
 
             const savedPost = await newPost.save()
@@ -37,46 +48,54 @@ const postController = {
         }
     },
 
-    updatePost : async(req, res, next) => {
-        try{
-
-            const {title, description, file, category} = req.body;
-            const {id} = req.params;
-            const {_id} = req.user
-
-            if(file){
-                const isFileExist = await File.findById(file)
-                if(!isFileExist){
-                    res.code = 404;
-                    throw new Error("File not found")
+    updatePost: async (req, res, next) => {
+        try {
+            const { title, description, file, category } = req.body;
+            const { id } = req.params;
+            const { _id } = req.user;
+    
+            if (file) {
+                const isFileExist = await File.findById(file);
+                if (!isFileExist) {
+                    return res.status(404).json({ code: 404, status: false, message: "File not found" });
                 }
             }
-
-            if(category){
-                const isCategoryExist = await Category.findById(category)
-                if(!isCategoryExist){
-                    res.code = 404;
-                    throw new Error("Category not found")
+    
+            if (category) {
+                const isCategoryExist = await Category.findById(category);
+                if (!isCategoryExist) {
+                    return res.status(404).json({ code: 404, status: false, message: "Category not found" });
                 }
             }
-
-            const post = await Post.findById(id)
-            if(!post){
-                res.code = 404;
-                throw new Error("Post not found")
+    
+            const post = await Post.findById(id);
+            if (!post) {
+                return res.status(404).json({ code: 404, status: false, message: "Post not found" });
             }
-
-            post.title  = title ? title : post.title;
-            post.description = description ? description : post.description;
+    
+            if (post.author._id.toString() !== req.user._id) {
+                return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot update this post" });
+            }
+    
+            const sanitizedDescription = description ? sanitizeHtml(description, {
+                allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2']),
+                allowedAttributes: {
+                    '*': ['style'],
+                    'img': ['src', 'alt'],
+                },
+            }) : post.description;
+    
+            post.title = title ? title : post.title;
+            post.description = sanitizedDescription;
             post.file = file ? file : post.file;
             post.category = category ? category : post.category;
-            post.updatedBy = _id
-
-            updatedPost = await post.save()
-
-            res.code(200).json({code : 200, status : true, message : "Post updated successfully", data : updatePost})
-        }catch(error){
-            next(error)
+            post.updatedBy = _id;
+    
+            const updatedPost = await post.save();
+    
+            res.status(200).json({ code: 200, status: true, message: "Post updated successfully", data: { updatedPost } });
+        } catch (error) {
+            next(error);
         }
     },
 
@@ -125,20 +144,24 @@ const postController = {
     getPost : async(req, res, next) => {
         try {
             const {id} = req.params
+            const {_id} = req.user
 
-            const post = await Post.findById(id).populate("file").populate("category").populate({
-                path: "updatedBy",
-                select: "-password -verificationCode -forgotPasswordCode"
-            })
+            const post = await Post.findById(id).populate("file")
+            .populate("category")
             .populate({
-                path : "author",
-                select : "-password -verificationCode -forgotPasswordCode"
-            })
+                path :"author",
+                select: "-password -verificationCode -forgotPasswordCode"
+            }) 
+            .populate({
+              path: "updatedBy",
+              select: "-password -verificationCode -forgotPasswordCode"})
+
             if(!post){
                 res.code = 404;
                 throw new Error("Post not found")
             }
 
+            console.log("Fetched Post:", post);
             res.status(200).json({ code : 200, status : true, message : "Post founded successfully", data : {post}})
         } catch (error) {
             next(error)
@@ -147,18 +170,19 @@ const postController = {
 
     deletePost : async(req, res, next) => {
         try {
-            const {id} = req.params; // :id
+            const {id} = req.params; 
+            const {_id} = req.user
+
             const post = await Post.findById(id)
             if(!post){
                 res.code = 404;
                 throw new Error("Posts not found")
             }
 
-            /*
-            if(post.author.toString() !== req.user._id){
-                return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot delete this comment" });
+
+            if(post.author._id.toString() !== req.user._id){
+                return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot delete this post" });
             }
-            */
 
     
             await Post.findByIdAndDelete(id)
