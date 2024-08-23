@@ -11,9 +11,6 @@ const postController = {
 
             const {title, description, file, category} = req.body;
             const {_id, author} = req.user;
-
-            console.log(req.user)
-
             const sanitizedDescription = sanitizeHtml(description, {
                 allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2']),
                 allowedAttributes: {
@@ -126,7 +123,10 @@ const postController = {
             const pages = Math.ceil(total / sizeNumber)
 
             const posts = await Post.find(query)
-            .populate('author')
+            .populate({
+                path : "author",
+                select: "-password -verificationCode -forgotPasswordCode"
+            })
             .populate("file")
             .populate("category")
             .select("-password -verificationCode -forgotPasswordCode")
@@ -160,8 +160,6 @@ const postController = {
                 res.code = 404;
                 throw new Error("Post not found")
             }
-
-            console.log("Fetched Post:", post);
             res.status(200).json({ code : 200, status : true, message : "Post founded successfully", data : {post}})
         } catch (error) {
             next(error)

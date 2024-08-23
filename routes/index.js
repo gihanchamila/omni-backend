@@ -4,5 +4,6 @@ import fileRoute from "./file.js"
 import postRoute from "./post.js"
 import commentRoute from "./comment.js"
 import likeRoute from "./like.js"
+import userRoute from "./user.js"
 
-export{authRoute, categoryRoute, fileRoute, postRoute, commentRoute, likeRoute}
+export{authRoute, categoryRoute, fileRoute, postRoute, commentRoute, likeRoute, userRoute}
