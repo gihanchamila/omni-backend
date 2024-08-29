@@ -90,6 +90,7 @@ const postController = {
             post.updatedBy = _id;
     
             const updatedPost = await post.save();
+            io.emit('postUpdated', updatedPost);
     
             res.status(200).json({ code: 200, status: true, message: "Post updated successfully", data: { updatedPost } });
         } catch (error) {
