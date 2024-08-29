@@ -38,6 +38,7 @@ const postController = {
             })
 
             const savedPost = await newPost.save()
+            io.emit('postAdded', savedPost);
             res.status(201).json({code : 201, status : true, message : "Post added successfully", data : savedPost})
 
         }catch(error){
