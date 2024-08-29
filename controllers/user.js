@@ -125,7 +125,7 @@ const userController = {
         }
     },
 
-    checkFollowStatus: async (req, res) => {
+    checkFollowStatus: async (req, res, next) => {
         try {
             const userId = req.params.id;
             const currentUserId = req.user._id;
@@ -142,10 +142,30 @@ const userController = {
     
             res.status(200).json({ code: 200, status: true, message: 'Follow status fetched successfully', data: { isFollowing } });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ code: 500, status: false, message: 'Server error' });
+            next(error)
         }
     },
+
+    getUserBlogs: async (req, res, next) => {
+        try {
+            const userId = req.user._id;
+    
+            // Find all posts where the author is the userId
+            const blogs = await Post.find({ author: userId })
+                                    .populate('author', 'name')
+                                    .populate('file', 'key') 
+                                    .populate('category', 'name') 
+                                    .populate('updatedBy', 'name'); 
+    
+            if (!blogs.length) {
+                return res.status(404).json({ message: "No blogs found for this user" });
+            }
+    
+            res.status(200).json({ code: 200, status: true, message: "User blogs fetched successfully", data: blogs });
+        } catch (error) {
+            next(error);
+        }
+    }
 
 }
 

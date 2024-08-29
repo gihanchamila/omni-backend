@@ -11,6 +11,8 @@ router.delete("/follow/:id", isAuth, idValidator, validate,  userController.unFo
 router.get('/followers/:id', isAuth, idValidator, validate, userController.getFollowersCount)
 router.get('/following/:id', isAuth, idValidator, validate, userController.getFollowingCount)
 router.get('/follow-status/:id', isAuth, idValidator, validate, userController.checkFollowStatus);
+router.get('/posts/:id', isAuth, idValidator, validate, userController.getUserBlogs);
+
 
 
 export default router

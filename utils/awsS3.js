@@ -43,7 +43,7 @@ export const signedUrl = async(Key) => {
     const command = new GetObjectCommand(params)
 
     try{
-        const url = await getSignedUrl(client, command, {expiresIn : 60})
+        const url = await getSignedUrl(client, command, {expiresIn : 100})
         return url
     }catch(error){
         console.log(error)
