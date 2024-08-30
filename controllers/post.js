@@ -12,7 +12,7 @@ const postController = {
 
             const {title, description, file, category} = req.body;
             const {_id, author} = req.user;
-            
+
             const io = getIO();
 
             const sanitizedDescription = sanitizeHtml(description, {
@@ -55,6 +55,7 @@ const postController = {
             const { title, description, file, category } = req.body;
             const { id } = req.params;
             const { _id } = req.user;
+            const io = getIO();
     
             if (file) {
                 const isFileExist = await File.findById(file);
