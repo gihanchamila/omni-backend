@@ -2,8 +2,7 @@ import User from "../models/User.js";
 import Category from "../models/Category.js"
 import Post from "../models/Post.js";
 import Follow from "../models/Follow.js";
-
-import {io} from '../index.js'
+import { getIO } from "../utils/socket.js";
 
 const userController = {
 
@@ -11,6 +10,7 @@ const userController = {
         try {
             const { id } = req.params;
             const userId = req.user._id;
+            const io = getIO()
     
             if (id === userId.toString()) {
                 return res.status(400).json({ code: 400, status: false, message: 'Cannot follow yourself' });
@@ -59,6 +59,7 @@ const userController = {
         try {
             const { id } = req.params;
             const userId = req.user._id;
+            const io = getIO()
     
             // Find and delete the follow relationship
             const follow = await Follow.findOneAndDelete({ follower: userId, following: id });
@@ -108,7 +109,8 @@ const userController = {
     getFollowingCount : async (req, res, next) => {
         try{
 
-            const {id} = req.params
+            const {id} = req;
+            const io = getIO()
 
             const user = await User.findById(id).select('name following')
 
@@ -146,12 +148,14 @@ const userController = {
         }
     },
 
-    getUserBlogs: async (req, res, next) => {
+    getUserPosts: async (req, res, next) => {
         try {
+
+            const {id} = req.params
             const userId = req.user._id;
     
             // Find all posts where the author is the userId
-            const blogs = await Post.find({ author: userId })
+            const blogs = await Post.find({ author: id })
                                     .populate('author', 'name')
                                     .populate('file', 'key') 
                                     .populate('category', 'name') 
@@ -166,7 +170,6 @@ const userController = {
             next(error);
         }
     }
-
 }
 
 export default userController

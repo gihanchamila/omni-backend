@@ -1,8 +1,8 @@
-import { io } from "../index.js";
 import Comment from "../models/Comment.js";
 import Like from "../models/Like.js";
 import Post from "../models/Post.js";
 import mongoose from "mongoose";
+import { getIO } from "../utils/socket.js";
 
 const likeController = {
 
@@ -13,6 +13,8 @@ const likeController = {
     
     try {
         const { postId } = req.params;
+        const io = getIO()
+        
         const existingLike = await Like.findOne({ user: req.user._id, post: postId }).session(session);
         
         if (existingLike) {

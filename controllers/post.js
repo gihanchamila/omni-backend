@@ -4,6 +4,7 @@ import Category from "../models/Category.js"
 import Post from "../models/Post.js"
 import Comment from "../models/Comment.js";
 import sanitizeHtml from 'sanitize-html';
+import { getIO } from "../utils/socket.js";
 
 const postController = {
     addPost : async (req, res, next) => {
@@ -11,6 +12,9 @@ const postController = {
 
             const {title, description, file, category} = req.body;
             const {_id, author} = req.user;
+            
+            const io = getIO();
+
             const sanitizedDescription = sanitizeHtml(description, {
                 allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2']),
                 allowedAttributes: {

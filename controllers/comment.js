@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
-import { io } from "../index.js";
+import { getIO } from "../utils/socket.js";
 
 const commentController = {
 
@@ -10,6 +10,7 @@ const commentController = {
             //Request content from body and postId from params
             const { content } = req.body;
             const { postId } = req.params;
+            const io = getIO();
 
             const comment = new Comment({
                 content,
@@ -39,6 +40,7 @@ const commentController = {
         try {
             const { content } = req.body;
             const { commentId, postId } = req.params;
+            const io = getIO();
 
             const parentComment = await Comment.findById(commentId)
                 .populate('author', 'name')
@@ -87,6 +89,7 @@ const commentController = {
         try {
             const { content } = req.body;
             const { postId, commentId, replyId } = req.params;
+            const io = getIO();
 
             const parentReply = await Comment.findById(replyId)
                 .populate('author', 'name')
@@ -141,6 +144,8 @@ const commentController = {
     getComments: async (req, res, next) => {
         try {
             const { postId } = req.params;
+            const io = getIO();
+
             const comments = await Comment.find({ postId, parentComment: null })
                 .populate('author', 'name')
                 .populate({
@@ -183,6 +188,8 @@ const commentController = {
         try{
 
             const {commentId} = req.params;
+            const io = getIO();
+            
             const comment = await Comment.findById(commentId)
 
             if (comment.author.toString() !== req.user._id) {
