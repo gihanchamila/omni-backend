@@ -109,8 +109,7 @@ const userController = {
     getFollowingCount : async (req, res, next) => {
         try{
 
-            const {id} = req;
-            const io = getIO()
+            const {id} = req.params;
 
             const user = await User.findById(id).select('name following')
 
