@@ -184,6 +184,36 @@ const userController = {
         } catch (error) {
             next(error)
         }
+    },
+
+    updateUser : async(req, res, next) => {
+        try {
+            const {_id} = req.user;
+            const {name, email, dateOfBirth, interests} = req.body;
+            const user = await User.findById(_id).select(" -password -verificationCode -forgotPasswordCode -isVerified -isActive -deactivation -followers -following -role -coverPhoto -profilePic -devices -createdAt -updatedAt")
+
+            if(!user){
+                res.code = 404;
+                throw new Error("User not found")
+            }
+
+            const isEmailExist = await User.findOne({email})
+
+            if (isEmailExist && String(isEmailExist._id) !== String(user._id)) {
+                res.status(400);
+                throw new Error("Email already exists");
+            }
+
+            user.name = name || user.name;
+            user.email = email || user.email;
+            user.dateOfBirth = dateOfBirth || user.dateOfBirth;
+            user.interests = interests || user.interests;
+
+            await user.save();
+            res.status(200).json({ code : 200, status : true, message : "User details updated", data : user})
+        } catch(error){
+            next(error)
+        }
     }
 
 }
