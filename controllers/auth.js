@@ -50,6 +50,17 @@ const authController = {
 
             const token = generateToken(user)
 
+            const deviceType = req.body.deviceType; // from frontend
+            const browser = req.body.browser; // from frontend
+            const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+            // Push device info into the user's devices array
+            user.devices.push({
+            deviceType,
+            browser,
+            ipAddress
+            });
+
             res.status(200).json({ code : 200, status : true, message : "User signin successfull",  data : {token, user}})
 
         }catch(error){
@@ -265,7 +276,9 @@ const authController = {
         } catch (error) {
             next(error)
         }
-    }
+    },
+
+
 }
 
 export default authController

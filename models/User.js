@@ -15,8 +15,8 @@ const userSchema = mongoose.Schema({
     isActive : {type : Boolean, default : true},
     deactivation : {type : Date, default : null},
     profilePic : {type : mongoose.Types.ObjectId, ref : 'file', default : null},
-    coverPhoto : {type : mongoose.Types.ObjectId, ref : 'file', default : null}
-    devices : 
+    coverPhoto : {type : mongoose.Types.ObjectId, ref : 'file', default : null},
+    devices : {type : mongoose.Types.ObjectId, ref : 'device', default : null}
 }, {
     timestamps : true
 })
