@@ -21,7 +21,7 @@ const commentController = {
             await comment.save();
 
             const populatedComment = await Comment.findById(comment._id)
-            .populate('author', 'name') // Replace 'name' with other fields if needed
+            .populate('author', 'name') 
             .exec();
             await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } });
 
@@ -156,7 +156,7 @@ const commentController = {
                             select: 'name'
                         },
                         {
-                            path: 'replies', // This will populate the nested replies
+                            path: 'replies', 
                             populate: {
                                 path: 'author',
                                 select: 'name'

@@ -126,7 +126,7 @@ const categoryController = {
         } catch (error) {
           next(error);
         }
-      },
+    },
 
     getCategory : async (req, res, next) => {
         try{

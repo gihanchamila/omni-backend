@@ -9,13 +9,11 @@ import morgan from "morgan"
 import connectMongodb from "./init/mongodb.js"
 
 import { authRoute, categoryRoute, commentRoute, fileRoute, likeRoute, postRoute, userRoute } from "./routes/index.js"
-
 import { errorHandler } from "./middlewares/errorHandler.js"
 import { notFound } from "./controllers/notfound.js"
 
 // Load environment variables
 dotenv.config()
-
 
 connectMongodb()
 

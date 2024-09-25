@@ -228,7 +228,7 @@ const authController = {
                     throw new Error("Email already exists")
                 }
             }
-
+ 
             if(profilePic){
                 const file = await File.findById(profilePic);
                 if(!file){
@@ -244,7 +244,7 @@ const authController = {
             if(email){
                 user.isVerified = false
             }
-
+            
             await user.save()
             res.status(200).json({code : 200, status : true, message : "User updated successfully", data : {user}})
         } catch (error) {
