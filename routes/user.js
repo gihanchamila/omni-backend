@@ -12,6 +12,7 @@ router.get('/followers/:id', isAuth, idValidator, validate, userController.getFo
 router.get('/following/:id', isAuth, idValidator, validate, userController.getFollowingCount)
 router.get('/follow-status/:id', isAuth, idValidator, validate, userController.checkFollowStatus);
 router.get('/user-posts/:id', isAuth, idValidator, validate, userController.getUserPosts);
+router.get('/devices', isAuth, idValidator, userController.userDevices)
 
 
 

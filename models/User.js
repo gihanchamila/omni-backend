@@ -4,6 +4,7 @@ const userSchema = mongoose.Schema({
     name : {type : String, required : true, minlength : 3},
     email : {type : String, required : true, trim : true, unique : true},
     bio : {type : String, default : null},
+    dateOfBirth : {type : Date, default : null},
     followers: [{ type: mongoose.Types.ObjectId, ref: 'user' }],
     following: [{ type: mongoose.Types.ObjectId, ref: 'user' }],
     password : {type : String, required : true, minlength : 6},
@@ -16,7 +17,14 @@ const userSchema = mongoose.Schema({
     deactivation : {type : Date, default : null},
     profilePic : {type : mongoose.Types.ObjectId, ref : 'file', default : null},
     coverPhoto : {type : mongoose.Types.ObjectId, ref : 'file', default : null},
-    devices : {type : mongoose.Types.ObjectId, ref : 'device', default : null}
+    devices: [
+        {
+            deviceType: { type: String },
+            browser: { type: String },
+            ipAddress: { type: String },
+            loggedInAt: { type: Date, default: Date.now }
+        }
+    ]
 }, {
     timestamps : true
 })

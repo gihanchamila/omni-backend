@@ -168,7 +168,24 @@ const userController = {
         } catch (error) {
             next(error);
         }
+    },
+
+    userDevices : async(req, res, next) => {
+        try {
+            const userId = req.user._id; 
+            const user = await User.findById(userId).select('devices');
+
+            if(!user){
+                res.code = 404;
+                throw new Error("User not found")
+            }
+
+            res.status(200).json({ code : 200, status : true, message : "User logged in devices got successfully", data : user})
+        } catch (error) {
+            next(error)
+        }
     }
+
 }
 
 export default userController

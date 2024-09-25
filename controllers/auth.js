@@ -4,6 +4,8 @@ import { comparePassword } from "../utils/comparePassword.js";
 import { generateToken } from "../utils/generateToken.js";
 import { generateCode } from "../utils/generateCode.js";
 import { sendMail } from "../utils/sendEmail.js";
+import { getDeviceType } from "../utils/deviceType.js";
+import { getBrowserInfo } from "../utils/browserInfo.js";
 
 const authController = {
     signup : async (req, res, next) => {
@@ -50,17 +52,27 @@ const authController = {
 
             const token = generateToken(user)
 
-            const deviceType = req.body.deviceType; // from frontend
-            const browser = req.body.browser; // from frontend
+            const userAgent = req.headers['user-agent']; // Get user agent from headers
+            const deviceType = getDeviceType(userAgent); // Use the new function
+            const browser = userAgent; // You can parse more if needed
             const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
-            // Push device info into the user's devices array
+
+            // Ensure the devices array exists
+            if (!user.devices) {
+                user.devices = [];
+            }
+
+            // Add device info to the devices array
             user.devices.push({
-            deviceType,
-            browser,
-            ipAddress
+                deviceType,
+                browser,
+                ipAddress,
+                loggedInAt: new Date()
             });
 
+            await user.save();
+            
             res.status(200).json({ code : 200, status : true, message : "User signin successfull",  data : {token, user}})
 
         }catch(error){
@@ -266,7 +278,7 @@ const authController = {
     currentUSer : async(req, res, next) => {
         try {
             const {_id} = req.user
-            const user = await User.findById(_id).select("name").populate("profilePic")
+            const user = await User.findById(_id)
             if(!user){
                 res.code = 404;
                 throw new Error("User not found")
@@ -276,7 +288,7 @@ const authController = {
         } catch (error) {
             next(error)
         }
-    },
+    }
 
 
 }
