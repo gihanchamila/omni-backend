@@ -6,6 +6,9 @@ import { generateCode } from "../utils/generateCode.js";
 import { sendMail } from "../utils/sendEmail.js";
 import { getDeviceType } from "../utils/deviceType.js";
 import { getBrowserInfo } from "../utils/browserInfo.js";
+import geoip from "geoip-lite";
+import UAParser from "ua-parser-js";
+
 
 const authController = {
     signup : async (req, res, next) => {
@@ -34,52 +37,86 @@ const authController = {
         }
     },
 
-    signin : async (req, res, next) => {
-        try{
-            const {email, password} = req.body
-            const user = await User.findOne({email})
-        
-            if(!user){
-                res.code = 401
-                throw new Error("Invalid credentials")
+    signin: async (req, res, next) => {
+        try {
+            const { email, password } = req.body;
+            const user = await User.findOne({ email });
+    
+            if (!user) {
+                res.status(401).json({ message: "Invalid credentials" });
+                return;
             }
-
-            const match = await comparePassword(password, user.password) // user.password = hashedPassword
-            if(!match){
-                res.code = 401
-                throw new Error("Invalid credentials")
+    
+            const match = await comparePassword(password, user.password);
+            if (!match) {
+                res.status(401).json({ message: "Invalid credentials" });
+                return;
             }
-
-            const token = generateToken(user)
-
-            const userAgent = req.headers['user-agent']; // Get user agent from headers
-            const deviceType = getDeviceType(userAgent); // Use the new function
-            const browser = userAgent; // You can parse more if needed
-            const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
-
-            // Ensure the devices array exists
-            if (!user.devices) {
-                user.devices = [];
+    
+            const token = generateToken(user);
+    
+            // Parse the user agent
+            const userAgentString = req.headers['user-agent'];
+            const parser = new UAParser();  // Instantiate UAParser
+            parser.setUA(userAgentString);  // Set user-agent string to be parsed
+    
+            const deviceType = parser.getDevice().type || "Laptop"; // Get device type (Mobile/Tablet/Laptop)
+            const browser = parser.getBrowser(); // Get browser details
+            const os = parser.getOS(); // Get OS details
+    
+            const browserName = browser.name || "Unknown Browser"; // e.g., "Chrome"
+            const browserVersion = browser.version || "Unknown Version"; // e.g., "129.0.0.0"
+            const osName = os.name || "Unknown OS"; // e.g., "Windows"
+            const osVersion = os.version || "Unknown Version"; // e.g., "10"
+    
+            // Get IP address
+            const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    
+            // Get location based on IP (optional)
+            const geo = geoip.lookup(ipAddress);
+            const location = geo ? `${geo.city}, ${geo.country}` : 'Unknown';
+    
+            // Add device info to user, but check if the current device is already registered
+            user.devices = user.devices || [];
+    
+            // Find if the current device (with matching type, browser, OS) already exists
+            const existingDevice = user.devices.find(device =>
+                device.deviceType === deviceType &&
+                device.browser === `${browserName} ${browserVersion}` &&
+                device.os === `${osName} ${osVersion}`
+            );
+    
+            if (existingDevice) {
+                // If the device is already in the list, update its login time and IP/location
+                existingDevice.loggedInAt = new Date();
+                existingDevice.ipAddress = ipAddress;
+                existingDevice.location = location;
+            } else {
+                // If not, add it as a new device
+                user.devices.push({
+                    deviceType,
+                    browser: `${browserName} ${browserVersion}`, // e.g., "Chrome 129.0.0.0"
+                    os: `${osName} ${osVersion}`, // e.g., "Windows 10"
+                    ipAddress,
+                    location,
+                    loggedInAt: new Date()
+                });
             }
-
-            // Add device info to the devices array
-            user.devices.push({
-                deviceType,
-                browser,
-                ipAddress,
-                loggedInAt: new Date()
-            });
-
+    
             await user.save();
-            
-            res.status(200).json({ code : 200, status : true, message : "User signin successfull",  data : {token, user}})
-
-        }catch(error){
-            next(error)
+    
+            res.status(200).json({
+                code: 200,
+                status: true,
+                message: "User signin successful",
+                data: { token, user, deviceType }
+            });
+    
+        } catch (error) {
+            next(error);
         }
     },
-
+    
     verifyCode : async (req, res, next) => {
         try{
 
@@ -232,49 +269,7 @@ const authController = {
             next(error)
         }
     },
-
-    updateProfilePic : async(req, res, next) => {
-        try {
-            const {_id} = req.user
-            const {name, email, profilePic} = req.body
-
-            const user = await User.findById(_id).select(" -password -verificationCode -forgotPasswordCode")
-            if(!user){
-                res.code = 404;
-                throw new Error("User not found")
-            }
-
-            if(email){
-                const isUserExist = await User.findOne({email});
-                if(isUserExist && isUserExist.email === email && String(user._id) !== String(isUserExist._id)){
-                    res.code = 400;
-                    throw new Error("Email already exists")
-                }
-            }
- 
-            if(profilePic){
-                const file = await File.findById(profilePic);
-                if(!file){
-                    res.code = 404;
-                    throw new Error("File not found")
-                }
-            }
-
-            user.name = name ? name : user.name
-            user.email = email ? email : user.email
-            user.profilePic = profilePic;
-
-            if(email){
-                user.isVerified = false
-            }
-            
-            await user.save()
-            res.status(200).json({code : 200, status : true, message : "User updated successfully", data : {user}})
-        } catch (error) {
-            next(error)
-        }
-    },
-
+    
     currentUSer : async(req, res, next) => {
         try {
             const {_id} = req.user

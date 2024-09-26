@@ -13,7 +13,6 @@ router.post("/verify-user", verifyUserValidator, validate, authController.verify
 router.post("/forgot-password-code", emailValidator, validate, authController.forgotPasswordCode)
 router.post("/recover-password", recoverPasswordValidator, validate, authController.recoverPassword)
 router.put("/change-password",isAuth,  changePasswordValidator, validate, authController.changePassword)
-router.put("/update-profile",isAuth, updateProfileValidator, validate, authController.updateProfilePic)
 router.get("/current-user", isAuth, authController.currentUSer)
 
 export default router

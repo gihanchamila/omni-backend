@@ -214,7 +214,50 @@ const userController = {
         } catch(error){
             next(error)
         }
-    }
+    },
+
+    updateProfilePic : async(req, res, next) => {
+        try {
+            const {_id} = req.user
+            const {name, email, profilePic} = req.body
+
+            const user = await User.findById(_id).select(" -password -verificationCode -forgotPasswordCode")
+            if(!user){
+                res.code = 404;
+                throw new Error("User not found")
+            }
+
+            if(email){
+                const isUserExist = await User.findOne({email});
+                if(isUserExist && isUserExist.email === email && String(user._id) !== String(isUserExist._id)){
+                    res.code = 400;
+                    throw new Error("Email already exists")
+                }
+            }
+ 
+            if(profilePic){
+                const file = await File.findById(profilePic);
+                if(!file){
+                    res.code = 404;
+                    throw new Error("File not found")
+                }
+            }
+
+            user.name = name ? name : user.name
+            user.email = email ? email : user.email
+            user.profilePic = profilePic;
+
+            if(email){
+                user.isVerified = false
+            }
+            
+            await user.save()
+            res.status(200).json({code : 200, status : true, message : "User updated successfully", data : {user}})
+        } catch (error) {
+            next(error)
+        }
+    },
+
 
 }
 

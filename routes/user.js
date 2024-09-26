@@ -3,6 +3,8 @@ import { userController } from "../controllers/index.js"
 import { idValidator } from "../validators/user.js"
 import { validate } from "../validators/validate.js"
 import {isAuth} from "../middlewares/isAuth.js"
+import { updateProfileValidator } from "../validators/auth.js"
+
 
 const router = express.Router()
 
@@ -14,5 +16,6 @@ router.get('/follow-status/:id', isAuth, idValidator, validate, userController.c
 router.get('/user-posts/:id', isAuth, idValidator, validate, userController.getUserPosts);
 router.get('/devices', isAuth, idValidator, userController.userDevices)
 router.put('/update-profile', isAuth, idValidator, userController.updateUser)
+router.put("/update-profilePic",isAuth,idValidator, updateProfileValidator, validate, userController.updateProfilePic)
 
 export default router
