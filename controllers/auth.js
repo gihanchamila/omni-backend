@@ -1,13 +1,12 @@
 import User from "../models/User.js"
 import hashPassword from "../utils/hashPassword.js"
+import geoip from "geoip-lite";
+import UAParser from "ua-parser-js";
 import { comparePassword } from "../utils/comparePassword.js";
 import { generateToken } from "../utils/generateToken.js";
 import { generateCode } from "../utils/generateCode.js";
 import { sendMail } from "../utils/sendEmail.js";
-import { getDeviceType } from "../utils/deviceType.js";
-import { getBrowserInfo } from "../utils/browserInfo.js";
-import geoip from "geoip-lite";
-import UAParser from "ua-parser-js";
+
 
 
 const authController = {
@@ -284,8 +283,6 @@ const authController = {
             next(error)
         }
     }
-
-
 }
 
 export default authController
