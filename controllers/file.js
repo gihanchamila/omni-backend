@@ -5,40 +5,55 @@ import File from "../models/File.js"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 const fileController = {
-    uploadFile : async (req, res, next) => {
-        try{
-
-            const {file} = req;
-            if(!file){
-                res.code = 400;
-                throw new Error("File not selected")
+    uploadFile: async (req, res, next) => {
+        try {
+            const { base64Image } = req.body;
+            const { file } = req;
+    
+            let buffer, ext, isValidExt;
+    
+            if (base64Image) {
+                const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, "");
+                buffer = Buffer.from(base64Data, 'base64');
+                ext = base64Image.split(';')[0].split('/')[1]; // Extract extension without leading dot
+                isValidExt = validateExtention(`.${ext}`);
+                if (!isValidExt) {
+                    return res.status(400).json({ code: 400, status: false, message: "Only 'jpg', 'jpeg' or 'png' is allowed" });
+                }
+            } else if (file) {
+                buffer = file.buffer; 
+                ext = path.extname(file.originalname).replace('.', ''); // Get extension without leading dot
+                isValidExt = validateExtention(`.${ext}`);
+                if (!isValidExt) {
+                    return res.status(400).json({ code: 400, status: false, message: "Only 'jpg', 'jpeg' or 'png' is allowed" });
+                }
+            } else {
+                return res.status(400).json({ code: 400, status: false, message: "No file data provided" });
             }
-
-            const ext = path.extname(file.originalname)
-            const isValidext = validateExtention(ext)
-
-            if(!isValidext){
-                res.code = 400;
-                throw new Error("Only 'jpg', 'jpeg' or 'png' is allowed")
-            }
-
-            const key = await uploadFileToS3({file, ext})
-            if(key){
+    
+            const key = await uploadFileToS3({ file: { buffer }, ext: `.${ext}` }); // Pass the extension with a dot
+            if (key) {
                 const newFile = new File({
                     key,
-                    size : file.size,
-                    mimetype : file.mimetype,
-                    createdBy : req.user._id
-                })
-                await newFile.save()
-                res.status(201).json({ code : 201, status : true, message : "File uploaded successfully", data : { key, id: newFile._id}})
+                    size: buffer.length,
+                    mimetype: `image/${ext}`,
+                    createdBy: req.user._id
+                });
+                await newFile.save();
+                return res.status(201).json({
+                    code: 201,
+                    status: true,
+                    message: "File uploaded successfully",
+                    data: { key, id: newFile._id }
+                });
             }
-            
-        }catch(error){
-            next(error)
+    
+            return res.status(500).json({ code: 500, status: false, message: "File upload failed" });
+        } catch (error) {
+            next(error);
         }
     },
-
+    
     getSignedUrl : async (req, res, next) => {
         try{
 

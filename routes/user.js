@@ -16,6 +16,6 @@ router.get('/follow-status/:id', isAuth, idValidator, validate, userController.c
 router.get('/user-posts/:id', isAuth, idValidator, validate, userController.getUserPosts);
 router.get('/devices', isAuth, idValidator, userController.userDevices)
 router.put('/update-profile', isAuth, idValidator, userController.updateUser)
-router.put("/update-profilePic",isAuth,idValidator, updateProfileValidator, validate, userController.updateProfilePic)
+router.post('/add-profilePic',isAuth, idValidator, validate, userController.addProfilePic)
 
 export default router

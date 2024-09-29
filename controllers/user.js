@@ -1,8 +1,10 @@
 import User from "../models/User.js";
 import Category from "../models/Category.js"
+import File from "../models/File.js";
 import Post from "../models/Post.js";
 import Follow from "../models/Follow.js";
 import { getIO } from "../utils/socket.js";
+import mongoose from "mongoose";
 
 const userController = {
 
@@ -216,47 +218,43 @@ const userController = {
         }
     },
 
-    updateProfilePic : async(req, res, next) => {
+    addProfilePic: async (req, res, next) => {
         try {
-            const {_id} = req.user
-            const {name, email, profilePic} = req.body
-
-            const user = await User.findById(_id).select(" -password -verificationCode -forgotPasswordCode")
-            if(!user){
-                res.code = 404;
-                throw new Error("User not found")
+            const { _id } = req.user; 
+            const { profilePic } = req.body;
+    
+            console.log("Request Body:", req.body);
+            console.log("Profile Pic ID from request:", profilePic);
+    
+            if (!mongoose.Types.ObjectId.isValid(profilePic)) {
+                return res.status(400).json({ code: 400, status: false, message: "Invalid profilePic ID format" });
             }
-
-            if(email){
-                const isUserExist = await User.findOne({email});
-                if(isUserExist && isUserExist.email === email && String(user._id) !== String(isUserExist._id)){
-                    res.code = 400;
-                    throw new Error("Email already exists")
-                }
+    
+            // Find the user
+            const user = await User.findById(_id).select("name email profilePic");
+            if (!user) {
+                return res.status(404).json({ code: 404, status: false, message: "User not found" });
             }
- 
-            if(profilePic){
-                const file = await File.findById(profilePic);
-                if(!file){
-                    res.code = 404;
-                    throw new Error("File not found")
-                }
+    
+            // Find the file
+            const file = await File.findById(profilePic);
+            if (!file) {
+                return res.status(404).json({ code: 404, status: false, message: "File not found" });
             }
-
-            user.name = name ? name : user.name
-            user.email = email ? email : user.email
+    
+            // Update the user's profile picture
             user.profilePic = profilePic;
-
-            if(email){
-                user.isVerified = false
-            }
-            
-            await user.save()
-            res.status(200).json({code : 200, status : true, message : "User updated successfully", data : {user}})
+            await user.save();
+    
+            // Respond with the updated user data
+            res.status(200).json({ code: 200, status: true, message: "User profile updated successfully", data: { user } });
         } catch (error) {
-            next(error)
+            console.error("Error updating profile pic:", error); // Log the error for debugging
+            next(error); // Pass any errors to the error handling middleware
         }
-    },
+    }
+    
+    
 
 
 }

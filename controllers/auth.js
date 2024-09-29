@@ -272,7 +272,7 @@ const authController = {
     currentUSer : async(req, res, next) => {
         try {
             const {_id} = req.user
-            const user = await User.findById(_id)
+            const user = await User.findById(_id).populate('profilePic')
             if(!user){
                 res.code = 404;
                 throw new Error("User not found")
