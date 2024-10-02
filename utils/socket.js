@@ -11,6 +11,12 @@ export const initializeSocket = (server) => {
 
     io.on('connection', (socket) => {
         console.log(`A user connected with ID: ${socket.id}`);
+        socket.on('clientToServer', (data) => {
+            console.log('Received from client:', data);
+    
+            // Send a response back to the client
+            socket.emit('serverToClient', { message: 'Hello from server!' });
+        });
         socket.on('disconnect', () => {
             console.log(`User disconnected with ID: ${socket.id}`);
         });

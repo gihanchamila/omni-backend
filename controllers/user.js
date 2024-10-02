@@ -5,6 +5,7 @@ import Post from "../models/Post.js";
 import Follow from "../models/Follow.js";
 import { getIO } from "../utils/socket.js";
 import mongoose from "mongoose";
+import { signedUrl } from "../utils/awsS3.js";
 
 const userController = {
 
@@ -222,9 +223,7 @@ const userController = {
         try {
             const { _id } = req.user; 
             const { profilePic } = req.body;
-    
-            console.log("Request Body:", req.body);
-            console.log("Profile Pic ID from request:", profilePic);
+            const io = getIO()
     
             if (!mongoose.Types.ObjectId.isValid(profilePic)) {
                 return res.status(400).json({ code: 400, status: false, message: "Invalid profilePic ID format" });
@@ -245,14 +244,22 @@ const userController = {
             // Update the user's profile picture
             user.profilePic = profilePic;
             await user.save();
+
+            const signedUrlForPic = await signedUrl(file.key);
+
+            io.emit('profilePicUpdated', {
+                userId: _id,
+                signedUrl: signedUrlForPic,
+            });
+            console.log('Emitted profilePicUpdated event:', { userId: _id, signedUrl: signedUrlForPic });
     
-            // Respond with the updated user data
             res.status(200).json({ code: 200, status: true, message: "User profile updated successfully", data: { user } });
         } catch (error) {
-            console.error("Error updating profile pic:", error); // Log the error for debugging
-            next(error); // Pass any errors to the error handling middleware
+
+            next(error);
         }
     }
+
     
 }
 
