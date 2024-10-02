@@ -6,6 +6,7 @@ import Follow from "../models/Follow.js";
 import { getIO } from "../utils/socket.js";
 import mongoose from "mongoose";
 import { signedUrl } from "../utils/awsS3.js";
+import { deleteFilesFromS3 } from "../utils/awsS3.js";
 
 const userController = {
 
@@ -229,19 +230,16 @@ const userController = {
                 return res.status(400).json({ code: 400, status: false, message: "Invalid profilePic ID format" });
             }
     
-            // Find the user
             const user = await User.findById(_id).select("name email profilePic");
             if (!user) {
                 return res.status(404).json({ code: 404, status: false, message: "User not found" });
             }
     
-            // Find the file
             const file = await File.findById(profilePic);
             if (!file) {
                 return res.status(404).json({ code: 404, status: false, message: "File not found" });
             }
-    
-            // Update the user's profile picture
+
             user.profilePic = profilePic;
             await user.save();
 
@@ -258,8 +256,48 @@ const userController = {
 
             next(error);
         }
-    }
+    },
 
+    removeProfilePic: async (req, res, next) => {
+        try {
+            const { _id } = req.user;
+            //const { profilePic } = req.body;
+            const { id } = req.query;
+            const io = getIO();
+
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                return res.status(400).json({ code: 400, status: false, message: "Invalid profilePic ID format" });
+            }
+    
+            const user = await User.findById(_id).select("name email profilePic");
+            if (!user) {
+                return res.status(404).json({ code: 404, status: false, message: "User not found" });
+            }
+    
+            if (user.profilePic.toString() !== id) {
+                return res.status(400).json({ code: 400, status: false, message: "Profile picture does not match" });
+            }
+    
+            const file = await File.findById(id);
+            if (!file) {
+                return res.status(404).json({ code: 404, status: false, message: "File not found" });
+            }
+
+            await File.findByIdAndDelete(id);
+            await deleteFilesFromS3(file.key)
+            user.profilePic = null;
+            await user.save();
+    
+            io.emit('profilePicRemoved', {
+                userId: _id,
+            });
+            console.log('Emitted profilePicRemoved event:', { userId: _id });
+    
+            res.status(200).json({ code: 200, status: true, message: "Profile picture removed successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
     
 }
 

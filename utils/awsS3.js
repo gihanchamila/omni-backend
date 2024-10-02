@@ -62,6 +62,6 @@ export const deleteFilesFromS3 = async(Key) => {
         await client.send(command)
         return
     }catch(error){
-        consol.log(error)
+        console.log(error)
     }
 }
