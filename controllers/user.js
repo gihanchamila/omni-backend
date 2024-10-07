@@ -212,6 +212,7 @@ const userController = {
             user.email = email || user.email;
             user.dateOfBirth = dateOfBirth || user.dateOfBirth;
             user.about = about || user.about
+            user.gender = gender || user.gender
            
             if (interests) {
                 if (Array.isArray(interests)) {
