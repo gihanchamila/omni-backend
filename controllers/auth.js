@@ -12,7 +12,7 @@ import { sendMail } from "../utils/sendEmail.js";
 const authController = {
     signup : async (req, res, next) => {
         try{
-            const {name, email, password, role} = req.body;
+            const {firstName, lastName, email, password, role} = req.body;
     
             const isEmailExist = await User.findOne({email})
             if(isEmailExist){
@@ -23,7 +23,8 @@ const authController = {
             const hashedPassword = await hashPassword(password)
     
             const newUser = new User({
-                name,
+                firstName,
+                lastName,
                 email,
                 password : hashedPassword,
                 role
