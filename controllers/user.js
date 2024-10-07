@@ -193,7 +193,7 @@ const userController = {
     updateUser : async(req, res, next) => {
         try {
             const {_id} = req.user;
-            const {name, email, dateOfBirth, interests} = req.body;
+            const {name, email, dateOfBirth, interests, about} = req.body;
             const user = await User.findById(_id).select(" -password -verificationCode -forgotPasswordCode -isVerified -isActive -deactivation -followers -following -role -coverPhoto -profilePic -devices -createdAt -updatedAt")
 
             if(!user){
@@ -211,6 +211,7 @@ const userController = {
             user.name = name || user.name;
             user.email = email || user.email;
             user.dateOfBirth = dateOfBirth || user.dateOfBirth;
+            user.about = about || user.about
            
             if (interests) {
                 if (Array.isArray(interests)) {
