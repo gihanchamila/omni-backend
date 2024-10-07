@@ -39,7 +39,7 @@ const authController = {
     signin: async (req, res, next) => {
         try {
             const { email, password } = req.body;
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ email }).populate("profilePic");
     
             if (!user) {
                 res.status(401).json({ message: "Invalid credentials" });
@@ -56,29 +56,27 @@ const authController = {
     
             // Parse the user agent
             const userAgentString = req.headers['user-agent'];
-            const parser = new UAParser();  // Instantiate UAParser
-            parser.setUA(userAgentString);  // Set user-agent string to be parsed
+            const parser = new UAParser(); 
+            parser.setUA(userAgentString);
     
-            const deviceType = parser.getDevice().type || "Laptop"; // Get device type (Mobile/Tablet/Laptop)
-            const browser = parser.getBrowser(); // Get browser details
-            const os = parser.getOS(); // Get OS details
+            const deviceType = parser.getDevice().type || "Laptop";
+            const browser = parser.getBrowser();
+            const os = parser.getOS();
     
-            const browserName = browser.name || "Unknown Browser"; // e.g., "Chrome"
-            const browserVersion = browser.version || "Unknown Version"; // e.g., "129.0.0.0"
-            const osName = os.name || "Unknown OS"; // e.g., "Windows"
-            const osVersion = os.version || "Unknown Version"; // e.g., "10"
-    
-            // Get IP address
+            const browserName = browser.name || "Unknown Browser";
+            const browserVersion = browser.version || "Unknown Version";
+            const osName = os.name || "Unknown OS";
+            const osVersion = os.version || "Unknown Version"; 
+
             const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     
-            // Get location based on IP (optional)
+
             const geo = geoip.lookup(ipAddress);
             const location = geo ? `${geo.city}, ${geo.country}` : 'Unknown';
-    
-            // Add device info to user, but check if the current device is already registered
+   
             user.devices = user.devices || [];
     
-            // Find if the current device (with matching type, browser, OS) already exists
+
             const existingDevice = user.devices.find(device =>
                 device.deviceType === deviceType &&
                 device.browser === `${browserName} ${browserVersion}` &&
@@ -86,7 +84,7 @@ const authController = {
             );
     
             if (existingDevice) {
-                // If the device is already in the list, update its login time and IP/location
+              
                 existingDevice.loggedInAt = new Date();
                 existingDevice.ipAddress = ipAddress;
                 existingDevice.location = location;
@@ -94,8 +92,8 @@ const authController = {
                 // If not, add it as a new device
                 user.devices.push({
                     deviceType,
-                    browser: `${browserName} ${browserVersion}`, // e.g., "Chrome 129.0.0.0"
-                    os: `${osName} ${osVersion}`, // e.g., "Windows 10"
+                    browser: `${browserName} ${browserVersion}`,
+                    os: `${osName} ${osVersion}`,
                     ipAddress,
                     location,
                     loggedInAt: new Date()
@@ -108,7 +106,7 @@ const authController = {
                 code: 200,
                 status: true,
                 message: "User signin successful",
-                data: { token, user, deviceType }
+                data: { token, user}
             });
     
         } catch (error) {

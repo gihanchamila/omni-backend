@@ -131,8 +131,11 @@ const postController = {
 
             const posts = await Post.find(query)
             .populate({
-                path : "author",
-                select: "-password -verificationCode -forgotPasswordCode"
+                path: 'author',
+                select: '-password -verificationCode -forgotPasswordCode -devices -bio -dateOfBirth -role ',
+                populate: {
+                  path: 'profilePic', 
+                },
             })
             .populate("file")
             .populate("category")
@@ -153,15 +156,20 @@ const postController = {
             const {id} = req.params
             const {_id} = req.user
 
-            const post = await Post.findById(id).populate("file")
+            const post = await Post.findById(id)
+            .populate("file")
             .populate("category")
             .populate({
-                path :"author",
-                select: "-password -verificationCode -forgotPasswordCode"
-            }) 
+                path: 'author',
+                select: '-password -verificationCode -forgotPasswordCode',
+                populate: {
+                path: 'profilePic', // This will populate the profilePic field of the author
+                }
+            })
             .populate({
-              path: "updatedBy",
-              select: "-password -verificationCode -forgotPasswordCode"})
+                path: "updatedBy",
+                select: "-password -verificationCode -forgotPasswordCode"
+            });
 
             if(!post){
                 res.code = 404;

@@ -211,7 +211,16 @@ const userController = {
             user.name = name || user.name;
             user.email = email || user.email;
             user.dateOfBirth = dateOfBirth || user.dateOfBirth;
-            user.interests = interests || user.interests;
+           
+            if (interests) {
+                if (Array.isArray(interests)) {
+                    user.interests = interests;
+                } else {
+                    res.status(400);
+                    throw new Error("Interests must be an array");
+                }
+            }
+    
 
             await user.save();
             res.status(200).json({ code : 200, status : true, message : "User details updated", data : user})
@@ -291,7 +300,6 @@ const userController = {
             io.emit('profilePicRemoved', {
                 userId: _id,
             });
-            console.log('Emitted profilePicRemoved event:', { userId: _id });
     
             res.status(200).json({ code: 200, status: true, message: "Profile picture removed successfully" });
         } catch (error) {
