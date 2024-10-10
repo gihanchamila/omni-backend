@@ -1,9 +1,13 @@
 import { check } from "express-validator";
 
 export const signupValidator = [
-    check("name")
+    check("firstName")
         .notEmpty()
-        .withMessage("Name is required"),
+        .withMessage("First Name is required"),
+
+    check("lastName")
+        .notEmpty()
+        .withMessage("Last Name is required"),
     
     check("email")
         .isEmail()
