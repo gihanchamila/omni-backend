@@ -4,7 +4,7 @@ const userSchema = mongoose.Schema({
     firstName : {type : String, required : true, minlength : 3},
     lastName : {type : String, required : true, minlength : 3},
     email : {type : String, required : true, trim : true, unique : true},
-    bio : {type : String, default : null},
+    about : {type : String, default : null},
     dateOfBirth : {type : String, default : null},
     gender: {
         type: String,
