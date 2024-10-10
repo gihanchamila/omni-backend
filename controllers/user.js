@@ -193,7 +193,7 @@ const userController = {
     updateUser : async(req, res, next) => {
         try {
             const {_id} = req.user;
-            const {name, email, dateOfBirth, interests, about} = req.body;
+            const {firstName, lastName, email, dateOfBirth, interests, about, gender} = req.body;
             const user = await User.findById(_id).select(" -password -verificationCode -forgotPasswordCode -isVerified -isActive -deactivation -followers -following -role -coverPhoto -profilePic -devices -createdAt -updatedAt")
 
             if(!user){
@@ -208,7 +208,8 @@ const userController = {
                 throw new Error("Email already exists");
             }
 
-            user.name = name || user.name;
+            user.firstName = firstName || user.firstName;
+            user.lastName = lastName || user.lastName;
             user.email = email || user.email;
             user.dateOfBirth = dateOfBirth || user.dateOfBirth;
             user.about = about || user.about
