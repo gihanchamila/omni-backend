@@ -293,7 +293,7 @@ const authController = {
             }
 
             const user = await User.findById(_id)
-            
+
             if (!user) {
                 res.status(404).json({ code: 404, status: false, message: "User not found" });
                 return;
@@ -301,8 +301,8 @@ const authController = {
 
             const hashedAnswer = await hashAnswer(answer)
 
-            user.question = question;
-            user.answer = hashedAnswer;
+            user.securityQuestion = question;
+            user.securityAnswer = hashedAnswer;
             await user.save()
 
             res.status(200).json({code : 200, status : true, message : "Saved successfully"})
