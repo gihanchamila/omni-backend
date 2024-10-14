@@ -181,6 +181,26 @@ const authController = {
         }
     },
 
+    verifyStatus : async (req, res, next) => {
+        try{
+
+            const _id = req.user;
+
+            const user = await User.findById(_id).select("isVerified")
+
+            if(!user){
+                res.code = 404;
+                throw new Error("User not found")
+            }
+
+            res.status(200).json({code : 200, status : true, message : "Verification status got successfully", isVerified: user.isVerified})
+
+        }catch(error){
+            next(error)
+        }
+
+    },
+
     forgotPasswordCode : async (req, res, next) => {
         try{
             const {email} = req.body;
