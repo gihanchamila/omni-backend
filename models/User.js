@@ -5,8 +5,8 @@ const userSchema = mongoose.Schema({
     lastName : {type : String, required : true, minlength : 3},
     email : {type : String, required : true, trim : true, unique : true},
     backUpEmail : {type : String, trim : true, unique : true},
-    question : {type : String},
-    answer : {type : String},
+    securityQuestion : {type : String},
+    securityAnswer : {type : String},
     about : {type : String, default : null},
     dateOfBirth : {type : String, default : null},
     gender: {
