@@ -1,6 +1,6 @@
 import express from "express"
 import { authController} from "../controllers/index.js"
-import { signupValidator, signinValidator, verifyUserValidator, emailValidator, recoverPasswordValidator, changePasswordValidator, updateProfileValidator } from "../validators/auth.js"
+import { signupValidator, signinValidator, verifyUserValidator, emailValidator, recoverPasswordValidator, changePasswordValidator, updateProfileValidator, validateSecurityQuestion } from "../validators/auth.js"
 import { validate } from "../validators/validate.js"
 import {isAuth} from "../middlewares/isAuth.js"
 
@@ -14,6 +14,7 @@ router.post("/forgot-password-code", emailValidator, validate, authController.fo
 router.post("/recover-password", recoverPasswordValidator, validate, authController.recoverPassword)
 router.put("/change-password",isAuth,  changePasswordValidator, validate, authController.changePassword)
 router.get("/current-user", isAuth, authController.currentUSer)
+router.post('/security-question', isAuth, validateSecurityQuestion, validate, authController.securityQuestion)
 
 export default router
 

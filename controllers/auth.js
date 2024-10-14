@@ -117,42 +117,43 @@ const authController = {
     },
     
     verifyCode : async (req, res, next) => {
-        try{
+        try {
+          const { email } = req.body;
+          const user = await User.findOne({ email });
+      
+          if (!user) {
+            res.status(404);
+            throw new Error("User not found");
+          }
+      
+          if (user.isVerified) {
+            res.status(400);
+            throw new Error("User is already verified");
+          }
+      
+          const code = generateCode(6);
+          user.verificationCode = code;
+          await user.save();
+          console.log(`Verification code generated: ${code}`);
 
-            const {email} = req.body;
-            const user = await User.findOne({email})
+      
+          // Send Email
+          await sendMail({
+            emailTo: user.email,
+            firstName : user.firstName,
+            lastName : user.lastName,
+            subject: "Email Verification Code",
+            code,
+            content : ` Verify your account `
 
-            if(!user){
-                res.code = 404
-                throw new Error("User not found")
-            }
-
-            if(user.isVerified){
-                res.code = 404
-                throw new Error("User is already verified")
-            }
-
-            const code = generateCode(6)
-            user.verificationCode = code
-            await user.save()
-            console.log(code)
-
-            //send Email
-
-            await sendMail({
-                emailTo : user.email,
-                subject : "Email verification code",
-                code,
-                content : "Verify your account"
-            });
-
-            res.status(200).json({code : 200, status : true, message : "User verification code sent successfully"})
-
-        }catch(error){
-            next(error)
+          });
+      
+          res.status(200).json({ code: 200, status: true, message: "User verification code sent successfully" });
+        } catch (error) {
+          next(error);
         }
     },
-
+      
     verifyUser : async (req, res, next) => {
         try{
 
@@ -286,9 +287,9 @@ const authController = {
         try{
 
             const _id = req.user;
-            const {question, answer} = req.body;
+            const {securityQuestion, securityAnswer} = req.body;
 
-            if (!question || !answer) {
+            if (!securityQuestion|| !securityAnswer) {
                 return res.status(400).json({ code: 400, status: false, message: "Question and answer are required" });
             }
 
@@ -299,10 +300,10 @@ const authController = {
                 return;
             }
 
-            const hashedAnswer = await hashAnswer(answer)
+            const hashedAnswer = await hashAnswer(securityAnswer)
 
-            user.securityQuestion = question;
-            user.securityAnswer = hashedAnswer;
+            user.securityQuestion = securityQuestion
+            user.securityAnswer = hashedAnswer
             await user.save()
 
             res.status(200).json({code : 200, status : true, message : "Saved successfully"})

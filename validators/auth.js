@@ -111,3 +111,14 @@ export const updateProfileValidator = [
         }
     })
 ];
+
+
+
+export const validateSecurityQuestion = [
+    check('securityQuestion')
+        .notEmpty()
+        .withMessage('Question is required'),
+    check('securityAnswer')
+        .notEmpty()
+        .withMessage('Answer is required'),
+];
