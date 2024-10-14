@@ -234,40 +234,38 @@ const authController = {
         }
     },
 
-    changePassword : async(req, res, next) => {
+    changePassword: async (req, res, next) => {
         try {
-            const {oldPassword, newPassword} = req.body;
-            const _id = req.user
-
-            const user = await User.findById(_id);
-            if(!user){
-                res.code = 404;
-                throw new Error("User not found")
-            }
-
-            const match = await comparePassword(oldPassword, user.password)
-            if(!match){
-                res.code = 400;
-                throw new Error("Old password doesn't match")
-            }
-
-            if(oldPassword === newPassword){
-                res.code = 400;
-                throw new Error("You are providing old password")
-            }
-
-            const hashedPassword = await hashPassword(newPassword)
-            user.password = hashedPassword
-            await user.save()
-
-            res.status(200).json({code : 200, status : true, message : "Password changed successfully"})
-
-            res.json(req.user)
+          const _id = req.user;
+          const { oldPassword, newPassword } = req.body;
+      
+          const user = await User.findById(_id);
+          if (!user) {
+            res.status(404).json({ code: 404, status: false, message: "User not found" });
+            return;
+          }
+      
+          const match = await comparePassword(oldPassword, user.password);
+          if (!match) {
+            res.status(400).json({ code: 400, status: false, message: "Old password doesn't match" });
+            return;
+          }
+      
+          if (oldPassword === newPassword) {
+            res.status(400).json({ code: 400, status: false, message: "New password cannot be the same as the old password" });
+            return;
+          }
+      
+          const hashedPassword = await hashPassword(newPassword);
+          user.password = hashedPassword;
+          await user.save();
+      
+          res.status(200).json({ code: 200, status: true, message: "Password changed successfully" });
         } catch (error) {
-            next(error)
+          next(error);
         }
     },
-    
+      
     currentUSer : async(req, res, next) => {
         try {
             const {_id} = req.user
@@ -279,6 +277,23 @@ const authController = {
 
             res.status(200).json({ code : 200, status : true, message : "Get current user successfully", data : {user}})
         } catch (error) {
+            next(error)
+        }
+    },
+
+    securityQuestion : async (req, res, next) => {
+        try{
+
+            const _id = req.user;
+            const {question, answer} = req.body;
+
+            const user = await User.findById(_id)
+            if (!user) {
+                res.status(404).json({ code: 404, status: false, message: "User not found" });
+                return;
+            }
+
+        }catch(error){
             next(error)
         }
     }
