@@ -6,6 +6,7 @@ import { comparePassword } from "../utils/comparePassword.js";
 import { generateToken } from "../utils/generateToken.js";
 import { generateCode } from "../utils/generateCode.js";
 import { sendMail } from "../utils/sendEmail.js";
+import hashAnswer from "../utils/hashAnswer.js";
 
 
 
@@ -287,11 +288,24 @@ const authController = {
             const _id = req.user;
             const {question, answer} = req.body;
 
+            if (!question || !answer) {
+                return res.status(400).json({ code: 400, status: false, message: "Question and answer are required" });
+            }
+
             const user = await User.findById(_id)
+            
             if (!user) {
                 res.status(404).json({ code: 404, status: false, message: "User not found" });
                 return;
             }
+
+            const hashedAnswer = await hashAnswer(answer)
+
+            user.question = question;
+            user.answer = hashedAnswer;
+            await user.save()
+
+            res.status(200).json({code : 200, status : true, message : "Saved successfully"})
 
         }catch(error){
             next(error)
