@@ -185,7 +185,6 @@ const authController = {
         try{
 
             const _id = req.user;
-
             const user = await User.findById(_id).select("isVerified")
 
             if(!user){
@@ -193,13 +192,40 @@ const authController = {
                 throw new Error("User not found")
             }
 
-            res.status(200).json({code : 200, status : true, message : "Verification status got successfully", isVerified: user.isVerified})
+            res.status(200).json({code : 200, status : true, message : `Verification status got successfully`, isVerified: user.isVerified})
 
         }catch(error){
             next(error)
         }
 
     },
+
+    resetVerifyStatus: async (req, res, next) => {
+        try {
+          const userId = req.user._id; 
+      
+          // First, find the user to check the current isVerified status
+          const user = await User.findById(userId);
+          
+          // Check if the user exists and if isVerified is true
+          if (!user) {
+            return res.status(404).json({ message: "User not found" });
+          }
+      
+          if (!user.isVerified) {
+            return res.status(200).json({ message: 'Verification status is already false. No changes made.', isVerified: user.isVerified });
+          }
+      
+          // Proceed to update the isVerified status to false
+          user.isVerified = false;
+          await user.save(); // Save the updated user document
+      
+          res.status(200).json({ message: 'Verification status has been reset successfully.', isVerified: user.isVerified });
+        } catch (error) {
+          next(error); 
+        }
+      },
+      
 
     forgotPasswordCode : async (req, res, next) => {
         try{
