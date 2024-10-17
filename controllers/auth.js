@@ -2,11 +2,17 @@ import User from "../models/User.js"
 import hashPassword from "../utils/hashPassword.js"
 import geoip from "geoip-lite";
 import UAParser from "ua-parser-js";
+import Post from "../models/Post.js";
+import Comment from "../models/Comment.js";
+import Like from "../models/Like.js"
+import File from "../models/File.js";
+
 import { comparePassword } from "../utils/comparePassword.js";
 import { generateToken } from "../utils/generateToken.js";
 import { generateCode } from "../utils/generateCode.js";
 import { sendMail } from "../utils/sendEmail.js";
 import hashAnswer from "../utils/hashAnswer.js";
+import mongoose from "mongoose";
 
 
 
@@ -357,7 +363,43 @@ const authController = {
         }catch(error){
             next(error)
         }
-    }
+    },
+
+    deleteUser: async (req, res, next) => {
+        const session = await mongoose.startSession();
+        session.startTransaction();
+    
+        try {
+            const _id = req.user;
+    
+            // Find user in the database
+            const user = await User.findById(_id);
+            if (!user) {
+                res.status(404).json({ code: 404, status: false, message: "User not found" });
+                return;
+            }
+    
+            // Delete user-related data from different collections
+            await Promise.all([
+                User.findByIdAndDelete(_id, { session }), // Delete the user
+                Post.deleteMany({ author: _id }, { session }), // Delete posts created by the user
+                Comment.deleteMany({ user: _id }, { session }), // Delete comments created by the user
+                Like.deleteMany({ user: _id }, { session }), // Delete likes by the user
+                File.deleteMany({createdBy : _id}, {session})
+            ]);
+    
+            // If everything is successful, commit the transaction
+            await session.commitTransaction();
+            session.endSession();
+    
+            res.status(200).json({ code: 200, status: true, message: "User and related data deleted successfully" });
+        } catch (error) {
+            // Roll back the transaction in case of an error
+            await session.abortTransaction();
+            session.endSession();
+            next(error);
+        }
+    },
 }
 
 export default authController

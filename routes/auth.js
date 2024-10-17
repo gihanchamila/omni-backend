@@ -17,6 +17,7 @@ router.post("/recover-password", recoverPasswordValidator, validate, authControl
 router.put("/change-password",isAuth,  changePasswordValidator, validate, authController.changePassword)
 router.get("/current-user", isAuth, authController.currentUSer)
 router.post('/security-question', isAuth, validateSecurityQuestion, validate, authController.securityQuestion)
+router.delete("/delete-account", isAuth, authController.deleteUser)
 
 export default router
 
