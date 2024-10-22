@@ -132,10 +132,10 @@ const postController = {
             const posts = await Post.find(query)
             .populate({
                 path: 'author',
-                select: '-password -verificationCode -forgotPasswordCode -devices -bio -dateOfBirth -role ',
+                select: '-password -verificationCode -forgotPasswordCode',
                 populate: {
-                  path: 'profilePic', 
-                },
+                path: 'profilePic',
+                }
             })
             .populate("file")
             .populate("category")
@@ -163,7 +163,7 @@ const postController = {
                 path: 'author',
                 select: '-password -verificationCode -forgotPasswordCode',
                 populate: {
-                path: 'profilePic', // This will populate the profilePic field of the author
+                path: 'profilePic',
                 }
             })
             .populate({

@@ -159,7 +159,13 @@ const userController = {
     
             // Find all posts where the author is the userId
             const blogs = await Post.find({ author: id })
-                                    .populate('author', 'name')
+                                    .populate({
+                                        path: 'author',
+                                        select: '-password -verificationCode -forgotPasswordCode',
+                                        populate: {
+                                        path: 'profilePic',
+                                        }
+                                    })
                                     .populate('file', 'key') 
                                     .populate('category', 'name') 
                                     .populate('updatedBy', 'name'); 
