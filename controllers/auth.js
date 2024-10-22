@@ -14,8 +14,6 @@ import { sendMail } from "../utils/sendEmail.js";
 import hashAnswer from "../utils/hashAnswer.js";
 import mongoose from "mongoose";
 
-
-
 const authController = {
     signup : async (req, res, next) => {
         try{
@@ -230,9 +228,8 @@ const authController = {
         } catch (error) {
           next(error); 
         }
-      },
+    },
       
-
     forgotPasswordCode : async (req, res, next) => {
         try{
             const {email} = req.body;

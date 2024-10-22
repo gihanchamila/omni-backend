@@ -21,6 +21,15 @@ export const addPostValidator = [
 
 export const updatePostValidator = [
 
+    param('id')
+        .exists().withMessage('Post ID is required')
+        .custom((id) => {
+            if (!mongoose.Types.ObjectId.isValid(id)) {
+                throw new Error('Invalid Post ID');
+            }
+            return true;
+        }),
+
     check("file").custom(async(file) => {
         if(file && !mongoose.Types.ObjectId.isValid(file)){
             throw "Invalid file id"
