@@ -314,6 +314,28 @@ const userController = {
         } catch (error) {
             next(error);
         }
+    },
+
+    getUser : async (req, res, next) => {
+        try {
+            
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ code: 400, status: false, message: "Invalid ID format" });
+        }
+
+        const user = await User.findById(id)
+            .select('firstName lastName email profilePic about interests followers follwoing'); 
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({code : 200, status : true, message : "Profile get successfully", user})
+        } catch (error) {
+            next(error)
+        }
     }
     
 }
