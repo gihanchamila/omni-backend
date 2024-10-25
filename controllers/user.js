@@ -326,7 +326,8 @@ const userController = {
         }
 
         const user = await User.findById(id)
-            .select('firstName lastName email profilePic about interests followers follwoing'); 
+            .select('firstName lastName email profilePic about interests followers following')
+            .populate({ path: 'profilePic' });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
