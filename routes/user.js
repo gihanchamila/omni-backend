@@ -18,6 +18,7 @@ router.put('/update-profile', isAuth, idValidator, userController.updateUser)
 router.post('/add-profilePic',isAuth, idValidator, validate, userController.addProfilePic)
 router.delete('/remove-profilePic',isAuth, idValidator, validate, userController.removeProfilePic)
 router.get('/user-profile/:id',isAuth, idValidator, validate, userController.getUser)
+router.get('/all-users',isAuth, userController.getAllUsers)
 
 
 export default router

@@ -1,5 +1,4 @@
 import User from "../models/User.js";
-import Category from "../models/Category.js"
 import File from "../models/File.js";
 import Post from "../models/Post.js";
 import Follow from "../models/Follow.js";
@@ -335,6 +334,18 @@ const userController = {
 
         res.status(200).json({code : 200, status : true, message : "Profile get successfully", user})
         } catch (error) {
+            next(error)
+        }
+    },
+
+    getAllUsers : async (req, res, next) => {
+        try{
+
+            const users = await User.find()
+            .select("_id firstName lastName createdAt")
+            res.status(200).json({code : 200, status : true, message : "All users fetched successfully", users})
+
+        }catch(error){
             next(error)
         }
     }
