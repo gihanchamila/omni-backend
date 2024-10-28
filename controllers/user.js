@@ -341,9 +341,28 @@ const userController = {
     getAllUsers : async (req, res, next) => {
         try{
 
-            const users = await User.find()
-            .select("_id firstName lastName createdAt")
-            res.status(200).json({code : 200, status : true, message : "All users fetched successfully", users})
+            const { q, size, page, sortField, sortOrder } = req.query;
+            let query = {};
+
+            const sizeNumber = parseInt(size) || 10;
+            const pageNumber = parseInt(page) || 1;
+
+            if (q) {
+                const search = RegExp(q, "i");
+                query = { $or: [{ id: search }, { firstName: search }] };
+              }
+
+            const sort = {};
+            if (sortField) {
+                sort[sortField] = sortOrder === 'asc' ? 1 : -1;
+            }
+          
+            const total = await User.countDocuments(query);
+            const pages = Math.ceil(total / sizeNumber);
+            
+            const users = await User.find(query).select("_id firstName lastName email gender isVerified createdAt").skip((pageNumber - 1) * sizeNumber).limit(sizeNumber).sort(sort);
+
+            res.status(200).json({code : 200, status : true, message : "All users fetched successfully", users, pages})
 
         }catch(error){
             next(error)
