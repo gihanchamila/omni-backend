@@ -382,7 +382,12 @@ const userController = {
             }
 
             await User.findByIdAndDelete(id)
+
+            io.emit('User-deleted', {
+                Id : _id
+            })
             res.status(200).json({code : 200, status : true, message : "User deleted successfully"})
+
         }catch(error){
             next(error)
         }

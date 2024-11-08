@@ -8,7 +8,7 @@ import morgan from "morgan"
 
 import connectMongodb from "./init/mongodb.js"
 
-import { authRoute, categoryRoute, commentRoute, fileRoute, likeRoute, postRoute, userRoute } from "./routes/index.js"
+import { authRoute, categoryRoute, commentRoute, fileRoute, likeRoute, postRoute, userRoute, adminRoute } from "./routes/index.js"
 import { errorHandler } from "./middlewares/errorHandler.js"
 import { notFound } from "./controllers/notfound.js"
 
@@ -35,6 +35,7 @@ app.use("/api/v1/posts", postRoute)
 app.use("/api/v1/comments", commentRoute)
 app.use("/api/v1/likes", likeRoute)
 app.use("/api/v1/user", userRoute)
+app.use("/api/v1/admin", adminRoute)
 
 // not found controller
 app.use("*", notFound) 
