@@ -61,7 +61,7 @@ const adminController = {
 
             await admin.save();
             io.emit("Admin-previlages-changed", {id})
-            res.status(200).json({code : 200, status : true, message : "Admin previlages changed successfully"})
+            res.status(200).json({code : 200, status : true, message : "Admin previlages changed successfully", user})
         } catch(error){
             next(error)
         }
