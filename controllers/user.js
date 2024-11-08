@@ -229,7 +229,6 @@ const userController = {
                 }
             }
     
-
             await user.save();
             res.status(200).json({ code : 200, status : true, message : "User details updated", data : user})
         } catch(error){
@@ -374,6 +373,7 @@ const userController = {
 
             // Get id from params
             const {id} = req.params
+            const io = getIO()
 
             const user = await User.findById(id)
             if(!user){
@@ -384,7 +384,7 @@ const userController = {
             await User.findByIdAndDelete(id)
 
             io.emit('User-deleted', {
-                Id : _id
+                id
             })
             res.status(200).json({code : 200, status : true, message : "User deleted successfully"})
 

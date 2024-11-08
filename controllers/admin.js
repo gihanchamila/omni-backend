@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import User from "../models/User.js";
+import { getIO } from "../utils/socket.js";
 
 const adminController = {
 
@@ -40,8 +41,31 @@ const adminController = {
         } catch (error) {
             next(error);
         }
-    }
+    },
 
+    removeAdmin : async (req, res, next) => {
+        try{
+            const {id} = req.params;
+            const io = getIO()
+
+            const user = await User.findById(id)
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            if (user.role !== 3) {
+                return res.status(400).json({ message: "User is not an admin" });
+            }
+
+            user.role = 3;
+
+            await admin.save();
+            io.emit("Admin-previlages-changed", {id})
+            res.status(200).json({code : 200, status : true, message : "Admin previlages changed successfully"})
+        } catch(error){
+            next(error)
+        }
+    }
 }
 
 export default adminController;

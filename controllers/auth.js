@@ -12,12 +12,14 @@ import { generateToken } from "../utils/generateToken.js";
 import { generateCode } from "../utils/generateCode.js";
 import { sendMail } from "../utils/sendEmail.js";
 import hashAnswer from "../utils/hashAnswer.js";
+import { getIO } from "../utils/socket.js";
 import mongoose from "mongoose";
 
 const authController = {
     signup : async (req, res, next) => {
         try{
             const {firstName, lastName, email, password, role} = req.body;
+            const io = getIO()
     
             const isEmailExist = await User.findOne({email})
             if(isEmailExist){
@@ -36,7 +38,8 @@ const authController = {
             })
     
             await newUser.save()
-            res.status(201).json({code : 201, status : true, message : "User registered successfully"})
+            io.emit("User-registered", { id: newUser._id });
+            res.status(201).json({code : 201, status : true, message : "User registered successfully", newUser})
         }catch(error){
             next(error)
         }
