@@ -21,7 +21,7 @@ export const sendMail = async ({emailTo, subject, code, content, firstName, last
                         <head>
                             <meta charset="UTF-8">
                             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <title>Email Verification</title>
+                            <title>${content}</title>
                         </head>
                         <body style="margin: 0; padding: 0; background-color: #f9f9f9;">
                             <div style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">

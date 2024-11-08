@@ -248,7 +248,9 @@ const authController = {
                 emailTo : user.email,
                 subject : "Forgot password code",
                 code,
-                content : "Change your password"
+                content : "Change your password",
+                firstName : `${user.firstName}`,
+                lastName : `${user.lastName}`
             });
 
             res.status(200).json({code : 200, status : true, message : "Forgot password sent successfully"})
