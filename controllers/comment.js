@@ -3,6 +3,8 @@ import Comment from "../models/Comment.js";
 import Post from "../models/Post.js";
 import { getIO } from "../utils/socket.js";
 import { populate } from "dotenv";
+import Notification from "../models/Notification.js";
+import formatDate from "../utils/time.js";
 
 const commentController = {
 
@@ -17,7 +19,18 @@ const commentController = {
                 author: req.user._id,
                 postId
             });
-    
+
+            const date = new Date();
+            const formattedTime = formatDate(date)
+
+            const commentNotification = new Notification({
+                userId: req.user._id,
+                message: `Comment added successfully`,
+                isRead: false,
+                Time : formattedTime
+            })
+            
+            await commentNotification.save();
             await comment.save();
     
             // Populating the author and their profile picture (key) in one step

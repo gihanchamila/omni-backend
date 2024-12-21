@@ -68,6 +68,7 @@ const notificationcontroller = {
                 notificationId: notificationId,
                 isRead: notification.isRead,
             });
+            
             res.status(200).json({code : 200, status : true, message : "Notification marked as read successfully", data: notification})
         }catch(error){
             next(error)
@@ -95,12 +96,25 @@ const notificationcontroller = {
         try{
 
             const { notificationId } = req.body;
+            const io = getIO()
 
             const notification = await Notification.findById(notificationId)
+            if (!notification) {
+                return res.status(404).json({
+                  code: 404,
+                  status: false,
+                  message: "Notification not found",
+                });
+              }
+            
             await Notification.findByIdAndDelete(notificationId)
+
             await User.findByIdAndUpdate(notification.userId, { $pull : {notifications : notificationId}})
 
-            io.to(notification.userId.toString()).emit("notification-counts-updated", {
+            const readCount = await Notification.countDocuments({ userId: notification.userId, isRead: true });
+            const unreadCount = await Notification.countDocuments({ userId: notification.userId, isRead: false });
+
+            io.to(notification.userId.toString()).emit("notification-deleted", {
                 readCount,
                 unreadCount,
             });

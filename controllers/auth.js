@@ -14,6 +14,7 @@ import { generateCode } from "../utils/generateCode.js";
 import { sendMail } from "../utils/sendEmail.js";
 import hashAnswer from "../utils/hashAnswer.js";
 import { getIO } from "../utils/socket.js";
+import formatDate from "../utils/time.js";
 import mongoose from "mongoose";
 
 const authController = {
@@ -66,15 +67,7 @@ const authController = {
 
             const loggedInTime = new Date();
 
-            const formattedTime = loggedInTime.toLocaleString('en-US', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false // Use 24-hour format
-            });
+            const formattedTime = formatDate(loggedInTime);
 
             const loginNotification = new Notification({
                 userId: user._id,
