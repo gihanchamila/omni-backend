@@ -6,5 +6,6 @@ import commentRoute from "./comment.js"
 import likeRoute from "./like.js"
 import userRoute from "./user.js"
 import adminRoute from "./admin.js"
+import notificationRoute from "./notification.js"
 
-export{authRoute, categoryRoute, fileRoute, postRoute, commentRoute, likeRoute, userRoute, adminRoute}
+export{authRoute, categoryRoute, fileRoute, postRoute, commentRoute, likeRoute, userRoute, adminRoute, notificationRoute}

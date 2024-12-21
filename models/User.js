@@ -15,6 +15,7 @@ const userSchema = mongoose.Schema({
     interests : {type : [String], default : []},
     followers: [{ type: mongoose.Types.ObjectId, ref: 'user' }],
     following: [{ type: mongoose.Types.ObjectId, ref: 'user' }],
+    notifications : [{type: mongoose.Types.ObjectId, ref : 'notification'}],
     password : {type : String, required : true, minlength : 6},
     // role 1 - Super admin, role 2 - Admin, role 3 - Normal
     role : {type : Number, default : 3},

@@ -17,6 +17,13 @@ export const initializeSocket = (server) => {
             // Send a response back to the client
             socket.emit('serverToClient', { message: 'Hello from server!' });
         });
+
+        socket.on("join-room", (userId) => {
+            socket.join(userId); // Join a room based on the user's ID
+            console.log(`User ${userId} joined their room.`);
+        });
+
+        
         socket.on('disconnect', () => {
             console.log(`User disconnected with ID: ${socket.id}`);
         });

@@ -53,15 +53,15 @@ const adminController = {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            if (user.role !== 3) {
+            if (typeof user.role == 'number' && user.role == 3) {
                 return res.status(400).json({ message: "User is not an admin" });
             }
 
-            user.role = 3;
-
-            await admin.save();
+            user.role = 3; 
+        
+            await user.save();
             io.emit("Admin-previlages-changed", {id})
-            res.status(200).json({code : 200, status : true, message : "Admin previlages changed successfully", user})
+            res.status(200).json({code : 200, status : true, message : "Admin previlages changed successfully", userRole : user.role })
         } catch(error){
             next(error)
         }

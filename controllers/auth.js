@@ -6,6 +6,7 @@ import Post from "../models/Post.js";
 import Comment from "../models/Comment.js";
 import Like from "../models/Like.js"
 import File from "../models/File.js";
+import Notification from "../models/Notification.js";
 
 import { comparePassword } from "../utils/comparePassword.js";
 import { generateToken } from "../utils/generateToken.js";
@@ -62,7 +63,28 @@ const authController = {
             }
     
             const token = generateToken(user);
+
+            const loggedInTime = new Date();
+
+            const formattedTime = loggedInTime.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false // Use 24-hour format
+            });
+
+            const loginNotification = new Notification({
+                userId: user._id,
+                message: `Logged in successfully at ${formattedTime}`,
+                isRead: false,
+                loggedInAt: formattedTime
+            });
     
+            await loginNotification.save();
+           
             // Parse the user agent
             const userAgentString = req.headers['user-agent'];
             const parser = new UAParser(); 
