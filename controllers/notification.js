@@ -95,7 +95,7 @@ const notificationcontroller = {
     deleteNotification : async(req, res, next) => {
         try{
 
-            const { notificationId } = req.body;
+            const { notificationId } = req.params;
             const io = getIO()
 
             const notification = await Notification.findById(notificationId)

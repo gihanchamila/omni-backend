@@ -21,16 +21,22 @@ const commentController = {
             });
 
             const date = new Date();
-            const formattedTime = formatDate(date)
+            const formattedTime = formatDate(date);
 
             const commentNotification = new Notification({
-                userId: req.user._id,
-                message: `Comment added successfully`,
-                isRead: false,
-                Time : formattedTime
-            })
-            
+            userId: req.user._id,
+            message: `Comment added successfully`,
+            isRead: false,
+            Time: formattedTime
+            });
+
             await commentNotification.save();
+
+            await User.findByIdAndUpdate(req.user._id, 
+            { $addToSet: { notifications: commentNotification._id } },
+            { new: true }
+            );
+
             await comment.save();
     
             // Populating the author and their profile picture (key) in one step
@@ -51,13 +57,22 @@ const commentController = {
                 postId,
                 populatedComment,
                 commentCount: updatedPost.commentCount,
+              });
+
+            console.log("new comment notification", commentNotification);
+          
+            io.to(req.user._id.toString()).emit("newComment", {
+                userNotifications: req.user._id.notifications,
+                notificationId: commentNotification._id,
             });
+          
     
             res.status(201).json({
                 code: 201,
                 status: true,
                 message: 'Comment added',
                 data: populatedComment,
+                notificationId: commentNotification._id
             });
         } catch (error) {
             next(error);
@@ -67,26 +82,21 @@ const commentController = {
     replyToComment: async (req, res, next) => {
         try {
             const { content } = req.body;
-            const { commentId, postId } = req.params;
+            const { postId, commentId } = req.params;
             const io = getIO();
-    
-            const parentComment = await Comment.findById(commentId)
-                .populate('author', 'firstName lastName')
-                .populate({
-                    path: 'replies',
-                    populate: { path: 'author', select: 'firstName lastName' }
-                });
-    
+
+            const parentComment = await Comment.findById(commentId).populate({ path: 'author', select: 'firstName lastName' });
+
             if (!parentComment) {
                 return res.status(404).json({ message: 'Parent comment not found' });
             }
-    
+
             const parentAuthor = await User.findById(parentComment.author);
-    
+
             if (!parentAuthor) {
                 return res.status(404).json({ message: 'Parent author not found' });
             }
-    
+
             const mention = `@${parentAuthor.firstName} ${parentAuthor.lastName}`;
             
             const reply = new Comment({
@@ -96,24 +106,70 @@ const commentController = {
                 parentComment: commentId,
                 mentions: [parentAuthor._id]
             });
-    
+
             await reply.save();
             parentComment.replies.push(reply._id);
             await parentComment.save();
-    
-            const populatedReply = await Comment.findById(reply._id).populate('author', 'firstName lastName');
-            await Post.findByIdAndUpdate(parentComment.postId, { $inc: { commentCount: 1 } });
-            
-            io.emit('replyAdd', {
-                postId,
-                reply: populatedReply
+
+            const date = new Date();
+            const formattedTime = formatDate(date);
+
+            const replyNotification = new Notification({
+                userId: parentAuthor._id,
+                message: `${req.user.firstName} ${req.user.lastName} mentioned you in a reply`,
+                isRead: false,
+                Time: formattedTime
             });
-    
+
+            await replyNotification.save();
+
+            await User.findByIdAndUpdate(parentAuthor._id, 
+                { $addToSet: { notifications: replyNotification._id } },
+                { new: true }
+            );
+
+            io.to(parentAuthor._id.toString()).emit("new-notification", {
+                notification: replyNotification,
+                userNotifications: parentAuthor.notifications,
+            });
+
+            // Handle mentions in the reply content
+            const mentionRegex = /@(\w+)/g;
+            const mentions = content.match(mentionRegex);
+
+            if (mentions) {
+                for (const mention of mentions) {
+                    const username = mention.slice(1); // Remove the '@' character
+                    const mentionedUser = await User.findOne({ username });
+
+                    if (mentionedUser) {
+                        const mentionNotification = new Notification({
+                            userId: mentionedUser._id,
+                            message: `${req.user.firstName} ${req.user.lastName} mentioned you in a reply`,
+                            isRead: false,
+                            Time: formattedTime
+                        });
+
+                        await mentionNotification.save();
+
+                        await User.findByIdAndUpdate(mentionedUser._id, 
+                            { $addToSet: { notifications: mentionNotification._id } },
+                            { new: true }
+                        );
+
+                        io.to(mentionedUser._id.toString()).emit("new-notification", {
+                            notification: mentionNotification,
+                            userNotifications: mentionedUser.notifications,
+                        });
+                    }
+                }
+            }
+
             res.status(201).json({
                 code: 201,
                 status: true,
                 message: 'Reply added',
-                data: { reply: populatedReply }
+                data: reply,
             });
         } catch (error) {
             next(error);

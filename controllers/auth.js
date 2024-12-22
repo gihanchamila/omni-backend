@@ -51,6 +51,7 @@ const authController = {
         try {
             const { email, password } = req.body;
             const user = await User.findOne({ email }).populate("profilePic");
+            const io = getIO();
     
             if (!user) {
                 res.status(401).json({ message: "Invalid credentials" });
@@ -77,6 +78,10 @@ const authController = {
             });
     
             await loginNotification.save();
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: loginNotification._id } }, 
+                { new: true }
+            );            
            
             // Parse the user agent
             const userAgentString = req.headers['user-agent'];
@@ -125,6 +130,9 @@ const authController = {
             }
     
             await user.save();
+            io.emit("new-notification", { id: loginNotification._id });
+            io.emit("notification-deleted", { id: loginNotification._id });
+
     
             res.status(200).json({
                 code: 200,

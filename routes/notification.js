@@ -10,6 +10,6 @@ router.get("/get-notifications", isAuth, validate, notificationcontroller.getNot
 router.post("/create-notification", isAuth, notificationValidator, validate, notificationcontroller.createNotification)
 router.put("/mark-as-read", isAuth, validateNotificationId, validate, notificationcontroller.markAsRead)
 router.get("/get-notification-count", isAuth, validateNotificationCount, validate, notificationcontroller.getNotificationCounts)
-router.delete("/delete-notification", isAuth, validateNotificationId, validate, notificationcontroller.deleteNotification)
+router.delete("/delete-notification/:notificationId", isAuth, validateNotificationId, validate, notificationcontroller.deleteNotification)
 
 export default router;
