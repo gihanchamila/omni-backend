@@ -44,7 +44,7 @@ const commentController = {
                 .populate({
                     path: 'author',
                     select: 'firstName lastName',
-                    populate: {
+                    populate: {   
                         path: 'profilePic',
                         select: 'key' // Ensure that the key from the file schema is included
                     }
@@ -53,20 +53,22 @@ const commentController = {
     
             const updatedPost = await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } }, { new: true });
     
-            io.emit('commentAdd', {
-                postId,
-                populatedComment,
-                commentCount: updatedPost.commentCount,
-              });
+            
 
-            console.log("new comment notification", commentNotification);
+            const emitData = {
+                postId,
+                comment: populatedComment,
+                profilePicKey: populatedComment.author.profilePic ? populatedComment.author.profilePic.key : null,
+                commentCount: updatedPost.commentCount,
+            };
+
+            io.emit('commentAdd', emitData);
           
             io.to(req.user._id.toString()).emit("newComment", {
                 userNotifications: req.user._id.notifications,
                 notificationId: commentNotification._id,
             });
           
-    
             res.status(201).json({
                 code: 201,
                 status: true,
@@ -187,7 +189,7 @@ const commentController = {
                 status: true,
                 message: 'Reply added',
                 data: populatedReply,
-                
+
                 
             });
         } catch (error) {
