@@ -52,9 +52,6 @@ const commentController = {
                 .exec();
     
             const updatedPost = await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } }, { new: true });
-    
-            
-
             const emitData = {
                 postId,
                 comment: populatedComment,
@@ -124,7 +121,6 @@ const commentController = {
 
             parentComment.replies.push(reply._id);
             await parentComment.save();
-
             const date = new Date();
             const formattedTime = formatDate(date);
 
@@ -179,17 +175,19 @@ const commentController = {
                 }
             }
 
-            io.emit('replyAdd', {
+            const emitData = {
                 postId,
-                reply
-            });
+                comment: populatedReply,
+                profilePicKey: populatedReply.author.profilePic ? populatedReply.author.profilePic.key : null,
+            };
+
+            io.emit('replyAdd', emitData);
 
             res.status(201).json({
                 code: 201,
                 status: true,
                 message: 'Reply added',
                 data: populatedReply,
-
                 
             });
         } catch (error) {
@@ -238,10 +236,19 @@ const commentController = {
                 .populate('author', 'firstName lastName'); // Corrected field selection
     
             await Post.findByIdAndUpdate(parentReply.postId, { $inc: { commentCount: 1 } });
+
             io.emit('nestedReplyAdd', {
                 postId,
                 reply: populatedReply
             });
+
+            const emitData = {
+                postId,
+                comment: reply,
+                profilePicKey: reply.author.profilePic ? reply.author.profilePic.key : null,
+            };
+
+            io.emit('nestedReplyAdd', emitData);
     
             res.status(201).json({
                 code: 201,
