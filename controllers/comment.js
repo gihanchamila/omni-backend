@@ -108,6 +108,18 @@ const commentController = {
             });
 
             await reply.save();
+
+            const populatedReply = await Comment.findById(reply._id)
+                .populate({
+                    path: 'author',
+                    select: 'firstName lastName',
+                    populate: {
+                        path: 'profilePic',
+                        select: 'key' // Ensure that the key from the file schema is included
+                    }
+                })
+                .exec();
+
             parentComment.replies.push(reply._id);
             await parentComment.save();
 
@@ -165,11 +177,18 @@ const commentController = {
                 }
             }
 
+            io.emit('replyAdd', {
+                postId,
+                reply
+            });
+
             res.status(201).json({
                 code: 201,
                 status: true,
                 message: 'Reply added',
-                data: reply,
+                data: populatedReply,
+                
+                
             });
         } catch (error) {
             next(error);
