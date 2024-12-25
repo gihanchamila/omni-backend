@@ -43,7 +43,7 @@ const commentController = {
             const populatedComment = await Comment.findById(comment._id)
                 .populate({
                     path: 'author',
-                    select: 'firstName lastName',
+                    select: '_id firstName lastName',
                     populate: {   
                         path: 'profilePic',
                         select: 'key' // Ensure that the key from the file schema is included
@@ -174,6 +174,8 @@ const commentController = {
                     }
                 }
             }
+
+            await Post.findByIdAndUpdate(parentComment.postId, { $inc: { commentCount: 1 } });
 
             const emitData = {
                 postId,
