@@ -403,46 +403,46 @@ const commentController = {
                 return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot delete this comment" });
             }
     
-            // Initialize variables to track IDs and count
+            // Initialize tracking for IDs to delete
             let totalCommentsToDelete = 0;
             const queue = [commentId];
-            const deletedCommentIds = [commentId]; // Track all IDs to delete
+            const deletedCommentIds = [commentId];
     
-            // Traverse and collect IDs of nested replies
+            // Traverse nested replies
             while (queue.length > 0) {
                 const currentCommentId = queue.pop();
-                const replies = await Comment.find({ parentComment: currentCommentId });
+                const replies = await Comment.find({ parentComment: currentCommentId }, '_id'); // Fetch only IDs
     
                 totalCommentsToDelete += replies.length;
                 for (const reply of replies) {
                     queue.push(reply._id);
-                    deletedCommentIds.push(reply._id); // Collect reply IDs
+                    deletedCommentIds.push(reply._id);
                 }
             }
     
-            totalCommentsToDelete += 1; // Include parent comment
+            totalCommentsToDelete += 1; // Include the parent comment
     
-            // If it's a reply, remove it from the parent comment replies
+            // If the comment is a reply, update the parent comment
             if (comment.parentComment) {
                 await Comment.findByIdAndUpdate(comment.parentComment, {
                     $pull: { replies: comment._id }
                 });
             }
     
-            // Emit deleted comment IDs and post information
+            // Emit event with deleted comment IDs and count
             io.emit('commentRemove', {
                 postId: comment.postId,
                 count: totalCommentsToDelete,
-                deletedComments: deletedCommentIds // Include all deleted comment IDs
+                deletedComments: deletedCommentIds
             });
     
-            // Delete comments and update post's comment count
-            await Comment.deleteMany({ parentComment: comment._id });
-            await comment.deleteOne();
+            // Batch delete comments
+            await Comment.deleteMany({ _id: { $in: deletedCommentIds } });
     
+            // Update post's comment count
             await Post.findByIdAndUpdate(comment.postId, { $inc: { commentCount: -totalCommentsToDelete } });
     
-            res.status(200).json({ code: 200, status: true, message: 'Comment deleted' });
+            res.status(200).json({ code: 200, status: true, message: 'Comment deleted successfully' });
         } catch (error) {
             next(error);
         }
