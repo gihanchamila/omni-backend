@@ -13,6 +13,11 @@ const commentController = {
             const { content } = req.body;
             const { postId } = req.params;
             const io = getIO();
+            const userId = req.user._id;
+
+            const user = await User.findById(userId).select('firstName lastName');
+            const firstName = user.firstName;
+            const lastName = user.lastName
     
             const comment = new Comment({
                 content,
@@ -25,7 +30,7 @@ const commentController = {
 
             const commentNotification = new Notification({
             userId: req.user._id,
-            message: `Comment added successfully`,
+            message: `Comment added`,
             isRead: false,
             Time: formattedTime
             });
@@ -41,22 +46,48 @@ const commentController = {
     
             // Populating the author and their profile picture (key) in one step
             const populatedComment = await Comment.findById(comment._id)
-                .populate({
+            .populate({
+                path: 'author',
+                select: '_id firstName lastName',
+                populate: {
+                    path: 'profilePic',
+                    select: 'key' // Include the key from the profilePic schema
+                }
+            })
+            .populate({
+                path: 'replies',
+                populate: {
                     path: 'author',
                     select: '_id firstName lastName',
-                    populate: {   
+                    populate: {
                         path: 'profilePic',
-                        select: 'key' // Ensure that the key from the file schema is included
+                        select: 'key'
                     }
-                })
-                .exec();
+                }
+            })
+
+            .populate({
+                path: 'replies',
+                populate: {
+                    path: 'author',
+                    select: '_id firstName lastName',
+                    populate: {
+                        path: 'profilePic',
+                        select: 'key'
+                    }
+                }
+            })
+            .exec();
     
             const updatedPost = await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } }, { new: true });
             const emitData = {
                 postId,
                 comment: populatedComment,
                 profilePicKey: populatedComment.author.profilePic ? populatedComment.author.profilePic.key : null,
-                commentCount: updatedPost.commentCount,
+                commentCount: updatedPost.commentCount, 
+                commentId: comment._id,
+                firstName,
+                lastName
             };
 
             io.emit('commentAdd', emitData);
@@ -64,12 +95,13 @@ const commentController = {
             io.to(req.user._id.toString()).emit("newComment", {
                 userNotifications: req.user._id.notifications,
                 notificationId: commentNotification._id,
+                message : commentNotification.message
             });
           
             res.status(201).json({
                 code: 201,
                 status: true,
-                message: 'Comment added',
+                message: 'Commment posted successfully!',
                 data: populatedComment,
                 notificationId: commentNotification._id
             });
@@ -82,7 +114,12 @@ const commentController = {
         try {
             const { content } = req.body;
             const { postId, commentId } = req.params;
+            const userId = req.user._id;
             const io = getIO();
+
+            const user = await User.findById(userId).select('firstName lastName');
+            const firstName = user.firstName;
+            const lastName = user.lastName
 
             const parentComment = await Comment.findById(commentId).populate({ path: 'author', select: 'firstName lastName' });
 
@@ -114,7 +151,7 @@ const commentController = {
                     select: 'firstName lastName',
                     populate: {
                         path: 'profilePic',
-                        select: 'key' // Ensure that the key from the file schema is included
+                        select: 'key'
                     }
                 })
                 .exec();
@@ -126,7 +163,7 @@ const commentController = {
 
             const replyNotification = new Notification({
                 userId: parentAuthor._id,
-                message: `${req.user.firstName} ${req.user.lastName} mentioned you in a reply`,
+                message: `${firstName} ${lastName} mentioned you in a reply`,
                 isRead: false,
                 Time: formattedTime
             });
@@ -155,7 +192,7 @@ const commentController = {
                     if (mentionedUser) {
                         const mentionNotification = new Notification({
                             userId: mentionedUser._id,
-                            message: `${req.user.firstName} ${req.user.lastName} mentioned you in a reply`,
+                            message: `${firstName} ${lastName} mentioned you in a reply`,
                             isRead: false,
                             Time: formattedTime
                         });
@@ -170,6 +207,7 @@ const commentController = {
                         io.to(mentionedUser._id.toString()).emit("new-notification", {
                             notification: mentionNotification,
                             userNotifications: mentionedUser.notifications,
+                            message
                         });
                     }
                 }
@@ -181,6 +219,9 @@ const commentController = {
                 postId,
                 comment: populatedReply,
                 profilePicKey: populatedReply.author.profilePic ? populatedReply.author.profilePic.key : null,
+                firstName,
+                lastName
+
             };
 
             io.emit('replyAdd', emitData);
@@ -190,6 +231,7 @@ const commentController = {
                 status: true,
                 message: 'Reply added',
                 data: populatedReply,
+                notificationId: replyNotification._id
                 
             });
         } catch (error) {
@@ -201,7 +243,12 @@ const commentController = {
         try {
             const { content } = req.body;
             const { postId, commentId, replyId } = req.params;
+            const userId = req.user._id;
             const io = getIO();
+
+            const user = await User.findById(userId).select('firstName lastName');
+            const firstName = user.firstName;
+            const lastName = user.lastName
     
             const parentReply = await Comment.findById(replyId)
                 .populate('author', 'firstName lastName') // Corrected field selection
@@ -233,7 +280,19 @@ const commentController = {
             await reply.save();
             parentReply.replies.push(reply._id);
             await parentReply.save();
-    
+
+            const date = new Date();
+            const formattedTime = formatDate(date);
+
+            const nestedReplyNotification = new Notification({
+                userId: parentAuthor._id,
+                message: `${req.user.firstName} ${req.user.lastName} mentioned you in a reply`,
+                isRead: false,
+                Time: formattedTime
+            });
+
+            await nestedReplyNotification.save()
+
             const populatedReply = await Comment.findById(reply._id)
                 .populate('author', 'firstName lastName'); // Corrected field selection
     
@@ -248,6 +307,9 @@ const commentController = {
                 postId,
                 comment: reply,
                 profilePicKey: reply.author.profilePic ? reply.author.profilePic.key : null,
+                notificationId: nestedReplyNotification._id,
+                firstName,
+                lastName
             };
 
             io.emit('nestedReplyAdd', emitData);
@@ -285,18 +347,28 @@ const commentController = {
                     populate: [
                         {
                             path: 'author',
-                            select: 'firstName lastName profilePic'
+                            select: 'firstName lastName profilePic',
+                            populate: {
+                                path : 'profilePic',
+                                select: 'key'
+                            }
                         },
                         {
                             path: 'replies', 
                             populate: {
                                 path: 'author',
-                                select: 'firstName lastName profilePic'
+                                select: 'firstName lastName profilePic',
+                                populate: {
+                                    path : 'profilePic',
+                                    select: 'key'
+                                }
                             }
                         }
                     ]
                 })
                 .sort({ createdAt: -1 });
+
+            io.emit('commentsLoaded', { postId, comments });
     
             res.status(200).json({ code: 200, status: true, message: "Comments loaded successfully", data: comments});
         } catch (error) {
@@ -331,46 +403,44 @@ const commentController = {
                 return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot delete this comment" });
             }
     
-            // Initialize totalCommentsToDelete and queue for comments to process
+            // Initialize variables to track IDs and count
             let totalCommentsToDelete = 0;
-            const queue = [commentId]; // Start with the comment to delete
+            const queue = [commentId];
+            const deletedCommentIds = [commentId]; // Track all IDs to delete
     
-            // Loop to count all nested replies
+            // Traverse and collect IDs of nested replies
             while (queue.length > 0) {
-                const currentCommentId = queue.pop(); // Get the current comment ID
-    
-                // Count direct replies to the current comment
+                const currentCommentId = queue.pop();
                 const replies = await Comment.find({ parentComment: currentCommentId });
-                totalCommentsToDelete += replies.length; // Add to the total count
     
-                // Add all replies to the queue to check for their replies
+                totalCommentsToDelete += replies.length;
                 for (const reply of replies) {
-                    queue.push(reply._id); // Push each reply to the queue
+                    queue.push(reply._id);
+                    deletedCommentIds.push(reply._id); // Collect reply IDs
                 }
             }
     
-            // Include the parent comment in the total count
-            totalCommentsToDelete += 1; // +1 for the parent comment
+            totalCommentsToDelete += 1; // Include parent comment
     
-            // If it's a reply, remove it from the parent comment's replies array
+            // If it's a reply, remove it from the parent comment replies
             if (comment.parentComment) {
                 await Comment.findByIdAndUpdate(comment.parentComment, {
                     $pull: { replies: comment._id }
                 });
             }
     
-            // Delete all replies and the parent comment itself
+            // Emit deleted comment IDs and post information
+            io.emit('commentRemove', {
+                postId: comment.postId,
+                count: totalCommentsToDelete,
+                deletedComments: deletedCommentIds // Include all deleted comment IDs
+            });
+    
+            // Delete comments and update post's comment count
             await Comment.deleteMany({ parentComment: comment._id });
             await comment.deleteOne();
     
-            // Decrement the comment count by the total number of deleted comments
             await Post.findByIdAndUpdate(comment.postId, { $inc: { commentCount: -totalCommentsToDelete } });
-    
-            // Emit the total comments removed
-            io.emit('commentRemove', {
-                postId: comment.postId,
-                count: totalCommentsToDelete // Send the count of deleted comments
-            });
     
             res.status(200).json({ code: 200, status: true, message: 'Comment deleted' });
         } catch (error) {
