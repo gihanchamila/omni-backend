@@ -38,5 +38,8 @@
     "socket.io": "^4.7.5",
     "ua-parser-js": "^1.0.39",
     "useragent": "^2.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }

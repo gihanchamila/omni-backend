@@ -175,11 +175,6 @@ const commentController = {
                 { new: true }
             );
 
-            io.to(parentAuthor._id.toString()).emit("new-notification", {
-                notification: replyNotification,
-                userNotifications: parentAuthor.notifications,
-            });
-
             // Handle mentions in the reply content
             const mentionRegex = /@(\w+)/g;
             const mentions = content.match(mentionRegex);
@@ -204,7 +199,7 @@ const commentController = {
                             { new: true }
                         );
 
-                        io.to(mentionedUser._id.toString()).emit("new-notification", {
+                        io.to(mentionedUser._id.toString()).emit("replyMentionedNotification", {
                             notification: mentionNotification,
                             userNotifications: mentionedUser.notifications,
                             message
@@ -244,92 +239,97 @@ const commentController = {
             const { content } = req.body;
             const { postId, commentId, replyId } = req.params;
             const userId = req.user._id;
-            const io = getIO();
-
-            const user = await User.findById(userId).select('firstName lastName');
-            const firstName = user.firstName;
-            const lastName = user.lastName
     
-            const parentReply = await Comment.findById(replyId)
-                .populate('author', 'firstName lastName') // Corrected field selection
-                .populate({
-                    path: 'replies',
-                    populate: { path: 'author', select: 'firstName lastName' } // Combined fields into a single select
-                });
+            const io = getIO();
+    
+            // Fetch user and parent reply concurrently
+            const [user, parentReply] = await Promise.all([
+                User.findById(userId).select('firstName lastName'),
+                Comment.findById(replyId)
+                    .populate('author', 'firstName lastName')
+                    .populate({
+                        path: 'replies',
+                        populate: { path: 'author', select: 'firstName lastName' }
+                    })
+            ]);
     
             if (!parentReply) {
                 return res.status(404).json({ message: 'Parent reply not found' });
             }
     
             const parentAuthor = parentReply.author;
+            console.log(parentAuthor)
             if (!parentAuthor) {
                 return res.status(404).json({ message: 'Parent author not found' });
             }
     
             const mention = `@${parentAuthor.firstName} ${parentAuthor.lastName}`;
     
-            const reply = new Comment({
+            // Create and save new reply
+            const reply = await new Comment({
                 content: `${mention} ${content}`,
-                author: req.user._id,
+                author: userId,
                 postId,
-                parentComment: commentId, 
-                parentReply: replyId, 
+                parentComment: commentId,
+                parentReply: replyId,
                 mentions: [parentAuthor._id]
-            });
+            }).save();
+
+            console.log(reply)
     
-            await reply.save();
+            // Update parent reply with new nested reply
             parentReply.replies.push(reply._id);
             await parentReply.save();
-
-            const date = new Date();
-            const formattedTime = formatDate(date);
-
-            const nestedReplyNotification = new Notification({
+    
+            // Format current date and time
+            const formattedTime = formatDate(new Date());
+    
+            // Create and save notification
+            const nestedReplyNotification = await new Notification({
                 userId: parentAuthor._id,
-                message: `${req.user.firstName} ${req.user.lastName} mentioned you in a reply`,
+                message: `${user.firstName} ${user.lastName} mentioned you in a reply`,
                 isRead: false,
                 Time: formattedTime
-            });
-
-            await nestedReplyNotification.save()
-
-            const populatedReply = await Comment.findById(reply._id)
-                .populate('author', 'firstName lastName'); // Corrected field selection
+            }).save();
     
-            await Post.findByIdAndUpdate(parentReply.postId, { $inc: { commentCount: 1 } });
-
-            io.emit('nestedReplyAdd', {
-                postId,
-                reply: populatedReply
-            });
-
-            io.to(parentAuthor._id.toString()).emit("new-notification", {
-                notification: nestedReplyNotification,
-                userNotifications: parentAuthor.notifications,
-            });
-
+            // Populate the new reply
+            const populatedReply = await Comment.findById(reply._id)
+                .populate('author', 'firstName lastName');
+    
+            // Update post's comment count
+            await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } });
+    
+            // Prepare emit data
             const emitData = {
                 postId,
-                comment: reply,
-                profilePicKey: reply.author.profilePic ? reply.author.profilePic.key : null,
+                reply: populatedReply,
                 notificationId: nestedReplyNotification._id,
-                firstName,
-                lastName
+                firstName: user.firstName,
+                lastName: user.lastName,
+                profilePicKey: user.profilePic ? user.profilePic.key : null
             };
-
-            io.emit('nestedReplyAdd', emitData);
     
+            // Emit events
+            io.emit('nestedReplyAdd', emitData);
+            io.to(parentAuthor._id.toString()).emit('nestedMentionedNotification', {
+                notification: nestedReplyNotification,
+                userNotifications: parentAuthor.notifications
+            });
+    
+            // Send response
             res.status(201).json({
                 code: 201,
                 status: true,
                 message: 'Reply added',
                 data: {
                     reply: populatedReply,
-                    parentAuthor: `${parentAuthor.firstName} ${parentAuthor.lastName}`, // Added parent author name to the response
+                    parentAuthor: `${parentAuthor.firstName} ${parentAuthor.lastName}`,
                     notificationId: nestedReplyNotification._id
                 }
             });
         } catch (error) {
+            // Enhanced error handling with a detailed log
+            console.error(`Error in replyToReply: ${error.message}`, error);
             next(error);
         }
     },
