@@ -6,38 +6,15 @@ const notificationcontroller = {
 
     getNotification : async(req,res,next) => {
         try{
-            const userId = req.user;
-            const { q, size, page, sortField, sortOrder } = req.query;
-
+            const userId = req.user._id;
+    
             if(!userId){
                 return res.status(400).json({code : 400, status : false, message : "User ID is required"});
             }
-
-            const sizeNumber = parseInt(size) || 10;
-            const pageNumber = parseInt(page) || 1;
-
-            let query = {};
-            if (q) {
-                const search = RegExp(q, "i");
-                query = { $or: [{ title: search }, { description: search }] };
-            }
-
-            const sort = {};
-            if (sortField) {
-                sort[sortField] = sortOrder === 'asc' ? 1 : -1;
-            } else {
-                sort['createdAt'] = -1; // Default sort by createdAt in descending order
-            }
-
-            const total = await Notification.countDocuments(query);
-            const pages = Math.ceil(total / sizeNumber);
-
-            const notifications = await Notification.find(query)
-                .skip((pageNumber - 1) * sizeNumber)
-                .limit(sizeNumber)
-                .sort(sort);
-
-            res.status(200).json({ code: 200, status: true, data: notifications, total, pages });
+    
+            const notifications = await Notification.find({userId});
+    
+            res.status(200).json({ code: 200, status: true, data: notifications });
         } catch (error) {
             next(error);
         }

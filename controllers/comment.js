@@ -171,7 +171,7 @@ const commentController = {
 
             await replyNotification.save();
 
-            await User.findByIdAndUpdate(parentAuthor._id, 
+            await User.findByIdAndUpdate(parentComment.author._id, 
                 { $addToSet: { notifications: replyNotification._id } },
                 { new: true }
             );
