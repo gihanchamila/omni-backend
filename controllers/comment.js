@@ -158,6 +158,7 @@ const commentController = {
 
             parentComment.replies.push(reply._id);
             await parentComment.save();
+            
             const date = new Date();
             const formattedTime = formatDate(date);
 
@@ -176,10 +177,10 @@ const commentController = {
             );
 
             // Handle mentions in the reply content
-            const mentionRegex = /@(\w+)/g;
-            const mentions = content.match(mentionRegex);
+            /* const mentionRegex = /@(\w+)/g;
+            const mentions = content.match(mentionRegex); */
 
-            if (mentions) {
+            /* if (mentions) {
                 for (const mention of mentions) {
                     const username = mention.slice(1); // Remove the '@' character
                     const mentionedUser = await User.findOne({ username });
@@ -207,7 +208,7 @@ const commentController = {
                     }
                 }
             }
-
+ */
             await Post.findByIdAndUpdate(parentComment.postId, { $inc: { commentCount: 1 } });
 
             const emitData = {
@@ -220,6 +221,10 @@ const commentController = {
             };
 
             io.emit('replyAdd', emitData);
+            io.to(parentAuthor._id.toString()).emit('replyMentionedNotification', {
+                notification: replyNotification,
+                userNotifications: parentAuthor.notifications
+            });
 
             res.status(201).json({
                 code: 201,
