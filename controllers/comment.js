@@ -303,6 +303,11 @@ const commentController = {
                 reply: populatedReply
             });
 
+            io.to(parentAuthor._id.toString()).emit("new-notification", {
+                notification: nestedReplyNotification,
+                userNotifications: parentAuthor.notifications,
+            });
+
             const emitData = {
                 postId,
                 comment: reply,
@@ -321,6 +326,7 @@ const commentController = {
                 data: {
                     reply: populatedReply,
                     parentAuthor: `${parentAuthor.firstName} ${parentAuthor.lastName}` // Added parent author name to the response
+                    notificationId: replyNotification._id
                 }
             });
         } catch (error) {
