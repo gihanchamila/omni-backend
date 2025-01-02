@@ -3,8 +3,10 @@ import User from "../models/User.js"
 import Category from "../models/Category.js"
 import Post from "../models/Post.js"
 import Comment from "../models/Comment.js";
+import Notification from "../models/Notification.js";
 import sanitizeHtml from 'sanitize-html';
 import { getIO } from "../utils/socket.js";
+import formatDate from "../utils/time.js";
 
 const postController = {
     addPost : async (req, res, next) => {
@@ -12,8 +14,10 @@ const postController = {
 
             const {title, description, file, category} = req.body;
             const {_id, author} = req.user;
-
             const io = getIO();
+
+            const date = new Date();
+            const formattedTime = formatDate(date);
 
             const sanitizedDescription = sanitizeHtml(description, {
                 allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2']),
@@ -38,12 +42,39 @@ const postController = {
             }
 
             const newPost = new Post({
-                title, description : sanitizedDescription, file, category, updatedBy : _id, author : _id
+                title, 
+                description : sanitizedDescription, 
+                file, 
+                category, 
+                updatedBy : _id, 
+                author : _id,
+            })
+
+            const addPostNotification = new Notification({
+                userId: req.user._id,
+                message: `Post added successfully`,
+                isRead: false,
+                Time : formattedTime
             })
 
             const savedPost = await newPost.save()
+            const savedNotification = await addPostNotification.save()
+
+            await User.findByIdAndUpdate(req.user._id, 
+                { $addToSet: { notifications: savedNotification._id } },
+                { new: true }
+                );
+
             io.emit('postAdded', savedPost);
-            res.status(201).json({code : 201, status : true, message : "Post added successfully", data : savedPost})
+
+           /*  io.emit('postAddedNotification', savedNotification); */
+            
+            io.to(req.user._id.toString()).emit("postAddedNotification", {
+                userNotifications: req.user._id.notifications,
+                notificationId: newPost._id,
+                message : addPostNotification.message
+            });
+            res.status(201).json({code : 201, status : true, message : "Post added successfully", data : savedPost, notificationId: savedNotification._id})
 
         }catch(error){
             next(error)
@@ -57,6 +88,7 @@ const postController = {
             const { _id } = req.user;
             const io = getIO();
     
+            // Check if file exists if provided
             if (file) {
                 const isFileExist = await File.findById(file);
                 if (!isFileExist) {
@@ -64,6 +96,7 @@ const postController = {
                 }
             }
     
+            // Check if category exists if provided
             if (category) {
                 const isCategoryExist = await Category.findById(category);
                 if (!isCategoryExist) {
@@ -71,33 +104,69 @@ const postController = {
                 }
             }
     
+            // Check if post exists
             const post = await Post.findById(id);
             if (!post) {
                 return res.status(404).json({ code: 404, status: false, message: "Post not found" });
             }
     
-            if (post.author._id.toString() !== req.user._id) {
+            // Check if the user is the author of the post
+            if (post.author.toString() !== _id.toString()) {
                 return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot update this post" });
             }
     
-            const sanitizedDescription = description ? sanitizeHtml(description, {
-                allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2']),
-                allowedAttributes: {
-                    '*': ['style'],
-                    'img': ['src', 'alt'],
-                },
-            }) : post.description;
+            // Sanitize description if provided
+            const sanitizedDescription = description
+                ? sanitizeHtml(description, {
+                      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2']),
+                      allowedAttributes: {
+                          '*': ['style'],
+                          img: ['src', 'alt'],
+                      },
+                  })
+                : post.description;
     
-            post.title = title ? title : post.title;
+            // Update post fields
+            post.title = title || post.title;
             post.description = sanitizedDescription;
-            post.file = file ? file : post.file;
-            post.category = category ? category : post.category;
+            post.file = file || post.file;
+            post.category = category || post.category;
             post.updatedBy = _id;
     
             const updatedPost = await post.save();
-            io.emit('postUpdated', updatedPost);
     
-            res.status(200).json({ code: 200, status: true, message: "Post updated successfully", data: { updatedPost } });
+            // Create and save notification
+            const formattedTime = formatDate(new Date());
+            const updatePostNotification = new Notification({
+                userId: _id,
+                message: `Your post has been updated successfully`,
+                isRead: false,
+                Time: formattedTime,
+            });
+    
+            const savedNotification = await updatePostNotification.save();
+    
+            // Add notification to the user's notification list
+            await User.findByIdAndUpdate(
+                _id,
+                { $addToSet: { notifications: savedNotification._id } },
+                { new: true }
+            );
+    
+            // Emit events
+            io.to(_id.toString()).emit("postUpdatedNotification", {
+                notificationId: savedNotification._id,
+                message: updatePostNotification.message,
+            });
+    
+            // Return success response
+            res.status(200).json({
+                code: 200,
+                status: true,
+                message: "Post updated successfully",
+                data: { updatedPost },
+                notificationId: savedNotification._id,
+            });
         } catch (error) {
             next(error);
         }
@@ -184,22 +253,41 @@ const postController = {
     deletePost : async(req, res, next) => {
         try {
             const {id} = req.params; 
-            const {_id} = req.user
+            const {_id} = req.user;
+            const io = getIO();
+
+            const date = new Date();
+            const formattedTime = formatDate(date);
 
             const post = await Post.findById(id)
+
             if(!post){
                 res.code = 404;
                 throw new Error("Posts not found")
             }
 
-
             if(post.author._id.toString() !== req.user._id){
                 return res.status(403).json({ code: 403, status: false, message: "Forbidden: You cannot delete this post" });
             }
 
-    
             await Post.findByIdAndDelete(id)
-            res.status(200).json({code : 200, status : true, message : "Post deleted successfully"})
+
+            const deletePostNotification = new Notification({
+                userId: req.user._id,
+                message: `Post deleted successfully`,
+                isRead: false,
+                Time : formattedTime
+            })
+
+            const savedNotification = await deletePostNotification.save()
+
+            io.to(req.user._id.toString()).emit("postDeletedNotification", {
+                userNotifications: req.user._id.notifications,
+                notificationId: Post._id,
+                message : deletePostNotification.message
+            });
+
+            res.status(200).json({code : 200, status : true, message : "Post deleted successfully", notificationId : savedNotification._id})
 
         } catch (error) {
             next(error)
