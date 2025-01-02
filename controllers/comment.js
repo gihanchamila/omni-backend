@@ -325,8 +325,8 @@ const commentController = {
                 message: 'Reply added',
                 data: {
                     reply: populatedReply,
-                    parentAuthor: `${parentAuthor.firstName} ${parentAuthor.lastName}` // Added parent author name to the response
-                    notificationId: replyNotification._id
+                    parentAuthor: `${parentAuthor.firstName} ${parentAuthor.lastName}`, // Added parent author name to the response
+                    notificationId: nestedReplyNotification._id
                 }
             });
         } catch (error) {
