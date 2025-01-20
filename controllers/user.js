@@ -265,8 +265,7 @@ const userController = {
                 userId: _id,
                 signedUrl: signedUrlForPic,
             });
-            console.log('Emitted profilePicUpdated event:', { userId: _id, signedUrl: signedUrlForPic });
-    
+            
             res.status(200).json({ code: 200, status: true, message: "User profile updated successfully", data: { user } });
         } catch (error) {
 
