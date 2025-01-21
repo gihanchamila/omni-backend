@@ -2,12 +2,16 @@ import User from "../models/User.js";
 import File from "../models/File.js";
 import Post from "../models/Post.js";
 import Follow from "../models/Follow.js";
+import Notification from "../models/Notification.js";
 import { getIO } from "../utils/socket.js";
 import mongoose from "mongoose";
 import { signedUrl } from "../utils/awsS3.js";
 import { deleteFilesFromS3 } from "../utils/awsS3.js";
+import formatDate from "../utils/time.js";
 
 const userController = {
+
+    
 
     followUser: async (req, res, next) => {
         try {
@@ -200,6 +204,7 @@ const userController = {
             const {_id} = req.user;
             const {firstName, lastName, email, dateOfBirth, interests, about, gender} = req.body;
             const user = await User.findById(_id).select(" -password -verificationCode -forgotPasswordCode -isVerified -isActive -deactivation -followers -following -role -coverPhoto -profilePic -devices -createdAt -updatedAt")
+            const io = getIO()
 
             if(!user){
                 res.code = 404;
@@ -228,9 +233,32 @@ const userController = {
                     throw new Error("Interests must be an array");
                 }
             }
+
+            const date = new Date();
+            const formattedTime = formatDate(date);
+
+            const updateUserNotification = new Notification({
+                userId: user._id,
+                message: `User details updated`,
+                isRead: false,
+                Time: formattedTime
+            })
+
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: updateUserNotification._id } }, 
+                { new: true }
+            );
+
+            io.to(req.user._id.toString()).emit("update-user", {
+                userNotifications: req.user._id.notifications,
+                notificationId: updateUserNotification._id,
+                message : updateUserNotification.message
+            });
     
             await user.save();
-            res.status(200).json({ code : 200, status : true, message : "User details updated", data : user})
+            await updateUserNotification.save();
+
+            res.status(200).json({ code : 200, status : true, message : "User details updated", data : user, notificationId: updateUserNotification._id, message : updateUserNotification.message})
         } catch(error){
             next(error)
         }

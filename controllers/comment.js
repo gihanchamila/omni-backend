@@ -103,7 +103,7 @@ const commentController = {
             io.emit('commentAdd', emitData);
           
             // Emit the comment notification to the author
-            io.to(req.user._id.toString()).emit("newComment", {
+            io.to(req.user._id.toString()).emit("new-comment", {
                 userNotifications: req.user._id.notifications,
                 notificationId: commentNotification._id,
                 message : commentNotification.message
@@ -115,7 +115,8 @@ const commentController = {
                 status: true,
                 message: 'Commment posted successfully!',
                 data: populatedComment,
-                notificationId: commentNotification._id
+                notificationId: commentNotification._id,
+                message : commentNotification.message
             });
         } catch (error) {
             next(error);
@@ -468,7 +469,6 @@ const commentController = {
             next(error);
         }
     }
-    
     
 }
 
