@@ -32,7 +32,7 @@ const commentController = {
             // comment notification
             const commentNotification = new Notification({
                 userId: req.user._id,
-                message: `Commment posted successfully!`,
+                message: `Commment posted successfully`,
                 isRead: false,
                 Time: formattedTime
             });
