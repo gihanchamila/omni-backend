@@ -12,7 +12,7 @@ const notificationcontroller = {
                 return res.status(400).json({code : 400, status : false, message : "User ID is required"});
             }
     
-            const notifications = await Notification.find({userId});
+            const notifications = await Notification.find({userId}).sort({ createdAt: -1 });;
     
             res.status(200).json({ code: 200, status: true, data: notifications });
         } catch (error) {

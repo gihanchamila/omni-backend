@@ -71,7 +71,7 @@ const authController = {
 
             const loginNotification = new Notification({
                 userId: user._id,
-                message: `Logged in successfully at ${formattedTime}`,
+                message: `You have successfully signed in`,
                 isRead: false,
                 loggedInAt: formattedTime
             });
@@ -151,6 +151,7 @@ const authController = {
         try {
           const { email } = req.body;
           const user = await User.findOne({ email });
+          const io = getIO();
       
           if (!user) {
             res.status(404);
@@ -165,7 +166,6 @@ const authController = {
           const code = generateCode(6);
           user.verificationCode = code;
           await user.save();
-          console.log(`Verification code generated: ${code}`);
 
       
           // Send Email
@@ -178,7 +178,28 @@ const authController = {
             content : ` Verify your account `
 
           });
-      
+
+          const date = new Date();
+          const formattedTime = formatDate(date);
+
+          const userVerificationNotification = new Notification({
+                userId: user._id,
+                message: `Verification code sent successfully at ${formattedTime}`,
+                isRead: false,
+                Time: formattedTime
+         })
+
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: userVerificationNotification._id } }, 
+                { new: true }
+        );
+
+            io.to(req.user._id.toString()).emit("verification-code-sent", {
+                userNotifications: req.user._id.notifications,
+                notificationId: userVerificationNotification._id,
+                message : userVerificationNotification.message
+            });
+        
           res.status(200).json({ code: 200, status: true, message: "User verification code sent successfully" });
         } catch (error) {
           next(error);
