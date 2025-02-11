@@ -11,8 +11,6 @@ import formatDate from "../utils/time.js";
 
 const userController = {
 
-    
-
     followUser: async (req, res, next) => {
         try {
             const { id } = req.params;

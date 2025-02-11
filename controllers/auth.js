@@ -71,7 +71,7 @@ const authController = {
 
             const loginNotification = new Notification({
                 userId: user._id,
-                message: `You have successfully signed in`,
+                message: `Success! You've logged in securely.`,
                 isRead: false,
                 loggedInAt: formattedTime
             });
@@ -184,23 +184,25 @@ const authController = {
 
           const userVerificationNotification = new Notification({
                 userId: user._id,
-                message: `Verification code sent successfully at ${formattedTime}`,
+                message: `Success! Please check your email for the verification code.`,
                 isRead: false,
                 Time: formattedTime
-         })
+            })
 
             await User.findByIdAndUpdate(user._id, 
                 { $addToSet: { notifications: userVerificationNotification._id } }, 
                 { new: true }
-        );
+            );
 
-            io.to(req.user._id.toString()).emit("verification-code-sent", {
-                userNotifications: req.user._id.notifications,
+            io.to(user._id.toString()).emit("verification-code-sent", {
+                userNotifications: user._id.notifications,
                 notificationId: userVerificationNotification._id,
                 message : userVerificationNotification.message
             });
+
+            await userVerificationNotification.save();
         
-          res.status(200).json({ code: 200, status: true, message: "User verification code sent successfully" });
+          res.status(200).json({ code: 200, status: true, message: "User verification code sent successfully" ,notificationId : userVerificationNotification._id, message : userVerificationNotification.message});
         } catch (error) {
           next(error);
         }
@@ -371,31 +373,56 @@ const authController = {
 
     changePassword: async (req, res, next) => {
         try {
-          const _id = req.user;
-          const { oldPassword, newPassword } = req.body;
-      
-          const user = await User.findById(_id);
-          if (!user) {
-            res.status(404).json({ code: 404, status: false, message: "User not found" });
-            return;
-          }
-      
-          const match = await comparePassword(oldPassword, user.password);
-          if (!match) {
-            res.status(400).json({ code: 400, status: false, message: "Old password doesn't match" });
-            return;
-          }
-      
-          if (oldPassword === newPassword) {
-            res.status(400).json({ code: 400, status: false, message: "New password cannot be the same as the old password" });
-            return;
-          }
-      
-          const hashedPassword = await hashPassword(newPassword);
-          user.password = hashedPassword;
-          await user.save();
-      
-          res.status(200).json({ code: 200, status: true, message: "Password changed successfully" });
+            const _id = req.user;
+            const { oldPassword, newPassword } = req.body;
+            const io = getIO()
+        
+            const user = await User.findById(_id);
+            if (!user) {
+                res.status(404).json({ code: 404, status: false, message: "User not found" });
+                return;
+            }
+        
+            const match = await comparePassword(oldPassword, user.password);
+            if (!match) {
+                res.status(400).json({ code: 400, status: false, message: "Old password doesn't match" });
+                return;
+            }
+        
+            if (oldPassword === newPassword) {
+                res.status(400).json({ code: 400, status: false, message: "New password cannot be the same as the old password" });
+                return;
+            }
+        
+            const hashedPassword = await hashPassword(newPassword);
+            user.password = hashedPassword;
+
+            const date = new Date();
+            const formattedTime = formatDate(date);
+
+            const passwordChangeNotification = new Notification({
+                userId: user._id,
+                message: `Success! Your password has been updated.`,
+                isRead: false,
+                Time: formattedTime
+            })
+
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: passwordChangeNotification._id } }, 
+                { new: true }
+            );
+
+            io.to(user._id.toString()).emit("password-changed", {
+                userNotifications: user._id.notifications,
+                notificationId: passwordChangeNotification._id,
+                message : passwordChangeNotification.message
+            });
+            
+            await user.save();
+            await passwordChangeNotification.save();
+
+            res.status(200).json({ code: 200, status: true, message: "Password changed successfully", notificationId : passwordChangeNotification._id, message : passwordChangeNotification.message });
+
         } catch (error) {
           next(error);
         }
