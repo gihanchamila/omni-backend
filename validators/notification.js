@@ -1,4 +1,3 @@
-import Notification from '../models/Notification.js'
 import { check, validationResult } from "express-validator";
 
 export const notificationValidator = [
