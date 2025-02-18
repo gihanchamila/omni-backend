@@ -21,7 +21,13 @@ connectMongodb()
 const app = express()
 
 // third-party middleware
-app.use(cors({origin: "http://localhost:5173"}))
+app.use(
+    cors({
+      origin: ['http://localhost:5173', 'https://omni-frontend-eta.vercel.app'],
+      methods: ['GET', 'POST'],
+      credentials: true,
+    })
+  );
 app.use(express.json({limit : "500mb"}));
 app.use(bodyParser.urlencoded({limit : "500mb", extended : true}));
 app.use(morgan("dev"))
