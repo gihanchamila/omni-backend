@@ -67,12 +67,11 @@ const authController = {
             const token = generateToken(user);
 
             const loggedInTime = new Date();
-
             const formattedTime = formatDate(loggedInTime);
 
             const loginNotification = new Notification({
                 userId: user._id,
-                message: `Logged in successfully at ${formattedTime}`,
+                message: `Success! You've logged in securely.`,
                 isRead: false,
                 loggedInAt: formattedTime
             });
@@ -99,13 +98,11 @@ const authController = {
 
             const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     
-
             const geo = geoip.lookup(ipAddress);
             const location = geo ? `${geo.city}, ${geo.country}` : 'Unknown';
    
             user.devices = user.devices || [];
     
-
             const existingDevice = user.devices.find(device =>
                 device.deviceType === deviceType &&
                 device.browser === `${browserName} ${browserVersion}` &&
@@ -130,15 +127,19 @@ const authController = {
             }
     
             await user.save();
-            io.emit("new-notification", { id: loginNotification._id });
-            io.emit("notification-deleted", { id: loginNotification._id });
 
-    
+            io.to(user._id.toString()).emit("signin-notification", {
+                userNotifications: user._id.notifications,
+                notificationId: loginNotification._id,
+                message : loginNotification.message
+            });
+
             res.status(200).json({
                 code: 200,
                 status: true,
                 message: "User signin successful",
-                data: { token, user}
+                data: { token, user},
+                notificationId : loginNotification._id
             });
     
         } catch (error) {
@@ -150,6 +151,7 @@ const authController = {
         try {
           const { email } = req.body;
           const user = await User.findOne({ email });
+          const io = getIO();
       
           if (!user) {
             res.status(404);
@@ -164,7 +166,6 @@ const authController = {
           const code = generateCode(6);
           user.verificationCode = code;
           await user.save();
-          console.log(`Verification code generated: ${code}`);
 
       
           // Send Email
@@ -177,8 +178,31 @@ const authController = {
             content : ` Verify your account `
 
           });
-      
-          res.status(200).json({ code: 200, status: true, message: "User verification code sent successfully" });
+
+          const date = new Date();
+          const formattedTime = formatDate(date);
+
+          const userVerificationNotification = new Notification({
+                userId: user._id,
+                message: `Success! Please check your email for the verification code.`,
+                isRead: false,
+                Time: formattedTime
+            })
+
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: userVerificationNotification._id } }, 
+                { new: true }
+            );
+
+            io.to(user._id.toString()).emit("verification-code-sent", {
+                userNotifications: user._id.notifications,
+                notificationId: userVerificationNotification._id,
+                message : userVerificationNotification.message
+            });
+
+            await userVerificationNotification.save();
+        
+          res.status(200).json({ code: 200, status: true, message: "User verification code sent successfully" ,notificationId : userVerificationNotification._id, message : userVerificationNotification.message});
         } catch (error) {
           next(error);
         }
@@ -189,6 +213,7 @@ const authController = {
 
             const {email, code} = req.body;
             const user = await User.findOne({email})
+            const io = getIO()
 
             if(!user){
                 res.code = 404
@@ -200,9 +225,25 @@ const authController = {
                 throw new Error("invalid code")
             }
 
+            const date = new Date();
+            const formattedTime = formatDate(date);
+
+            const userVerificationNotification = new Notification({
+                userId: user._id,
+                message: `Your account has been verified successfully!`,
+                isRead: false,
+                Time: formattedTime
+            })
+
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: userVerificationNotification._id } }, 
+                { new: true }
+            );   
+
             user.isVerified = true;
             user.verificationCode = null;
             await user.save()
+            await userVerificationNotification.save();
 
             res.status(200).json({code : 200, status : true, message : " User verified successfully"})
 
@@ -289,6 +330,7 @@ const authController = {
         try{
             const {email, code, password} = req.body;
             const user = await User.findOne({email})
+            const io = getIO()
 
             if(!user){
                 res.code = 404;
@@ -296,7 +338,8 @@ const authController = {
             }
 
             if(user.forgotPasswordCode !== code){
-                res.code = 403; //403 Forbidden
+                res.code = 403;
+                res.status(403).json({ status: false, message: "Invalid code" });
                 throw new Error("Invalid code")
             }
 
@@ -304,7 +347,23 @@ const authController = {
             user.password = hashedPassword;
             user.forgotPasswordCode = null;
 
+            const date = new Date();
+            const formattedTime = formatDate(date);
+
+            const passwordChangeNotification = new Notification({
+                userId: user._id,
+                message: `Password changed successfully at ${formattedTime}`,
+                isRead: false,
+                Time: formattedTime
+            })
+
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: passwordChangeNotification._id } }, 
+                { new: true }
+            );  
+
             await user.save()
+            await passwordChangeNotification.save()
 
             res.status(200).json({code : 200, status : true, message : "Password change successfull"})
 
@@ -315,31 +374,56 @@ const authController = {
 
     changePassword: async (req, res, next) => {
         try {
-          const _id = req.user;
-          const { oldPassword, newPassword } = req.body;
-      
-          const user = await User.findById(_id);
-          if (!user) {
-            res.status(404).json({ code: 404, status: false, message: "User not found" });
-            return;
-          }
-      
-          const match = await comparePassword(oldPassword, user.password);
-          if (!match) {
-            res.status(400).json({ code: 400, status: false, message: "Old password doesn't match" });
-            return;
-          }
-      
-          if (oldPassword === newPassword) {
-            res.status(400).json({ code: 400, status: false, message: "New password cannot be the same as the old password" });
-            return;
-          }
-      
-          const hashedPassword = await hashPassword(newPassword);
-          user.password = hashedPassword;
-          await user.save();
-      
-          res.status(200).json({ code: 200, status: true, message: "Password changed successfully" });
+            const _id = req.user;
+            const { oldPassword, newPassword } = req.body;
+            const io = getIO()
+        
+            const user = await User.findById(_id);
+            if (!user) {
+                res.status(404).json({ code: 404, status: false, message: "User not found" });
+                return;
+            }
+        
+            const match = await comparePassword(oldPassword, user.password);
+            if (!match) {
+                res.status(400).json({ code: 400, status: false, message: "Old password doesn't match" });
+                return;
+            }
+        
+            if (oldPassword === newPassword) {
+                res.status(400).json({ code: 400, status: false, message: "New password cannot be the same as the old password" });
+                return;
+            }
+        
+            const hashedPassword = await hashPassword(newPassword);
+            user.password = hashedPassword;
+
+            const date = new Date();
+            const formattedTime = formatDate(date);
+
+            const passwordChangeNotification = new Notification({
+                userId: user._id,
+                message: `Success! Your password has been updated.`,
+                isRead: false,
+                Time: formattedTime
+            })
+
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: passwordChangeNotification._id } }, 
+                { new: true }
+            );
+
+            io.to(user._id.toString()).emit("password-changed", {
+                userNotifications: user._id.notifications,
+                notificationId: passwordChangeNotification._id,
+                message : passwordChangeNotification.message
+            });
+            
+            await user.save();
+            await passwordChangeNotification.save();
+
+            res.status(200).json({ code: 200, status: true, message: "Password changed successfully", notificationId : passwordChangeNotification._id, message : passwordChangeNotification.message });
+
         } catch (error) {
           next(error);
         }
@@ -365,6 +449,7 @@ const authController = {
 
             const _id = req.user;
             const {securityQuestion, securityAnswer} = req.body;
+            const io = getIO()
 
             if (!securityQuestion|| !securityAnswer) {
                 return res.status(400).json({ code: 400, status: false, message: "Question and answer are required" });
@@ -379,9 +464,25 @@ const authController = {
 
             const hashedAnswer = await hashAnswer(securityAnswer)
 
+            const date = new Date();
+            const formattedTime = formatDate(date);
+
+            const securityQuestionNotification = new Notification({
+                userId: user._id,
+                message: `Security question and answer saved successfully at ${formattedTime}`,
+                isRead: false,
+                Time: formattedTime
+            })
+
+            await User.findByIdAndUpdate(user._id, 
+                { $addToSet: { notifications: securityQuestionNotification._id } }, 
+                { new: true }
+            );  
+
             user.securityQuestion = securityQuestion
             user.securityAnswer = hashedAnswer
             await user.save()
+            await securityQuestionNotification.save()
 
             res.status(200).json({code : 200, status : true, message : "Saved successfully"})
 

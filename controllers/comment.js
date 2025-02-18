@@ -18,7 +18,8 @@ const commentController = {
             const user = await User.findById(userId).select('firstName lastName');
             const firstName = user.firstName;
             const lastName = user.lastName
-    
+            
+            // Comment 
             const comment = new Comment({
                 content,
                 author: req.user._id,
@@ -28,23 +29,28 @@ const commentController = {
             const date = new Date();
             const formattedTime = formatDate(date);
 
+            // comment notification
             const commentNotification = new Notification({
-            userId: req.user._id,
-            message: `Comment added`,
-            isRead: false,
-            Time: formattedTime
+                userId: req.user._id,
+                message: `Commment posted successfully`,
+                isRead: false,
+                Time: formattedTime
             });
 
+            // Save comment notification
             await commentNotification.save();
 
+            // Add notification to user
             await User.findByIdAndUpdate(req.user._id, 
             { $addToSet: { notifications: commentNotification._id } },
             { new: true }
             );
 
+            // Save comment
             await comment.save();
     
             // Populating the author and their profile picture (key) in one step
+            // Populating profile key will help  to get profile picture of the author
             const populatedComment = await Comment.findById(comment._id)
             .populate({
                 path: 'author',
@@ -78,8 +84,11 @@ const commentController = {
                 }
             })
             .exec();
-    
+            
+            // Increment the comment count of the post
             const updatedPost = await Post.findByIdAndUpdate(postId, { $inc: { commentCount: 1 } }, { new: true });
+
+            // Emit the comment data to all connected clients
             const emitData = {
                 postId,
                 comment: populatedComment,
@@ -90,20 +99,24 @@ const commentController = {
                 lastName
             };
 
+            // Emit the comment data to all connected clients
             io.emit('commentAdd', emitData);
           
-            io.to(req.user._id.toString()).emit("newComment", {
+            // Emit the comment notification to the author
+            io.to(req.user._id.toString()).emit("new-comment", {
                 userNotifications: req.user._id.notifications,
                 notificationId: commentNotification._id,
                 message : commentNotification.message
             });
           
+            // Send the response
             res.status(201).json({
                 code: 201,
                 status: true,
                 message: 'Commment posted successfully!',
                 data: populatedComment,
-                notificationId: commentNotification._id
+                notificationId: commentNotification._id,
+                message : commentNotification.message
             });
         } catch (error) {
             next(error);
@@ -387,15 +400,13 @@ const commentController = {
         }
     },
 
-    getCommentCount : async (req, res, next) => {
-        try{
-
+    getCommentCount: async (req, res, next) => {
+        try {
             const { postId } = req.params;
-            const count = await Post.findById(postId).select('commentCount')
-            res.status(200).json({ code: 200, status: true, message: "Comments count loaded successfully", data: {count}});
-
-        }catch(error){
-            next(error)
+            const count = await Post.findById(postId).select('commentCount');
+            res.status(200).json({ code: 200, status: true, message: "Comments count loaded successfully", data: { count } });
+        } catch (error) {
+            next(error);
         }
     },
     
@@ -458,7 +469,6 @@ const commentController = {
             next(error);
         }
     }
-    
     
 }
 

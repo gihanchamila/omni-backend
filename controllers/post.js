@@ -318,7 +318,7 @@ const postController = {
     popularPost : async (req, res, next) => {
         try {
             const popularPosts = await Post.find()
-            .sort({likesCount : "desc"})
+            .sort({ likesCount: -1 })
             .limit(3)
             .populate('file') // Populate if you need details from the file reference
             .populate('comment') // Populate if you need details from the comment reference
