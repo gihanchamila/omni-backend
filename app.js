@@ -23,7 +23,7 @@ const app = express()
 // third-party middleware
 app.use(
     cors({
-      origin: ['http://localhost:5173', 'https://omni-frontend-eta.vercel.app'],
+      origin: ['http://localhost:5173'],
       methods: ['GET', 'POST'],
       credentials: true,
     })
