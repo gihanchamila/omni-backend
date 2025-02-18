@@ -338,7 +338,8 @@ const authController = {
             }
 
             if(user.forgotPasswordCode !== code){
-                res.code = 403; //403 Forbidden
+                res.code = 403;
+                res.status(403).json({ status: false, message: "Invalid code" });
                 throw new Error("Invalid code")
             }
 
