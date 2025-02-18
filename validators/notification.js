@@ -1,5 +1,5 @@
 import { check, validationResult } from "express-validator";
-
+import Notification from "../models/Notification.js";
 export const notificationValidator = [
 
     check("userId")
