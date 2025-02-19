@@ -2,12 +2,25 @@ import { Server } from 'socket.io';
 let io; 
 
 export const initializeSocket = (server) => {
-    io = new Server(server, {
+    // Vercel Url
+
+    
+        io = new Server(server, {
+            cors: {
+                origin: ["https://omni-frontend-steel.vercel.app"], // Vercel URL
+                methods: ["GET", "POST"]
+            }
+        });
+   
+
+    // This is use for localhost
+
+    /* io = new Server(server, {
         cors: {
-            origin: ["https://omni-frontend-steel.vercel.app"], // Vercel URL
+            origin: "http://localhost:5173",
             methods: ["GET", "POST"]
         }
-    });
+    }); */
 
     io.on('connection', (socket) => {
         console.log(`A user connected with ID: ${socket.id}`);
