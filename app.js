@@ -21,6 +21,7 @@ connectMongodb()
 const app = express()
 
 // third-party middleware
+// This middleware will used for online servers
 /*
   app.use(
     cors({
@@ -30,6 +31,8 @@ const app = express()
     })
   );
 */
+
+// This is used for localhost
 app.use(cors({origin: "http://localhost:5173"}))
 app.use(express.json({limit : "500mb"}));
 app.use(bodyParser.urlencoded({limit : "500mb", extended : true}));
