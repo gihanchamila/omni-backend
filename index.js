@@ -15,3 +15,4 @@ initializeSocket(server);
 // server.listen(process.env.PORT || 8080, () => console.log(`Server is running on port ${port}`))
 
 // This is used for localhost
+server.listen(port, () => console.log(`Server is running on port ${port}`))
