@@ -21,13 +21,16 @@ connectMongodb()
 const app = express()
 
 // third-party middleware
-app.use(
-  cors({
-      origin: ['https://omni-frontend-steel.vercel.app', 'https://omni-frontend-g60c4kvvb-gihanchamilas-projects.vercel.app'], 
-      methods: ["GET", "POST", "PUT", "DELETE"],
-      credentials: true,
-  })
-);
+/*
+  app.use(
+    cors({
+        origin: ['https://omni-frontend-steel.vercel.app', 'https://omni-frontend-g60c4kvvb-gihanchamilas-projects.vercel.app'], 
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
+    })
+  );
+*/
+app.use(cors({}))
 app.use(express.json({limit : "500mb"}));
 app.use(bodyParser.urlencoded({limit : "500mb", extended : true}));
 app.use(morgan("dev"))
