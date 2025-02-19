@@ -13,6 +13,15 @@ export const initializeSocket = (server) => {
         });
     */
 
+    // This is use for localhost
+
+    io = new Server(server, {
+        cors: {
+            origin: "http://localhost:5173",
+            methods: ["GET", "POST"]
+        }
+    });
+
     io.on('connection', (socket) => {
         console.log(`A user connected with ID: ${socket.id}`);
         socket.on('clientToServer', (data) => {

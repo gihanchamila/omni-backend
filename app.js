@@ -32,6 +32,7 @@ const app = express()
   );
 */
 
+
 // This is used for localhost
 app.use(cors({origin: "http://localhost:5173"}))
 app.use(express.json({limit : "500mb"}));
