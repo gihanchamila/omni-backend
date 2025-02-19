@@ -23,18 +23,18 @@ const app = express()
 // third-party middleware
 // This middleware will used for online servers
 
-  /* app.use(
+  app.use(
     cors({
         origin: ['https://omni-frontend-steel.vercel.app', 'https://omni-frontend-g60c4kvvb-gihanchamilas-projects.vercel.app'], 
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true,
     })
-  ); */
+  );
 
 
 
 // This is used for localhost
-app.use(cors({origin: "http://localhost:5173"}))
+// app.use(cors({origin: "http://localhost:5173"}))
 app.use(express.json({limit : "500mb"}));
 app.use(bodyParser.urlencoded({limit : "500mb", extended : true}));
 app.use(morgan("dev"))
