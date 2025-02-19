@@ -23,7 +23,7 @@ const app = express()
 // third-party middleware
 app.use(
   cors({
-      origin: ['https://omni-frontend-steel.vercel.app', 'https://omni-frontend-g60c4kvvb-gihanchamilas-projects.vercel.app'], // Vercel URL
+      origin: ['https://omni-frontend-steel.vercel.app', 'https://omni-frontend-g60c4kvvb-gihanchamilas-projects.vercel.app'], 
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
   })
