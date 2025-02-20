@@ -25,7 +25,7 @@ const app = express()
 
   app.use(
     cors({
-        origin: ['https://omni-frontend-steel.vercel.app', 'https://omni-frontend-g60c4kvvb-gihanchamilas-projects.vercel.app'], 
+        origin: ['https://omni-frontend-steel.vercel.app', 'https://omni-frontend-g60c4kvvb-gihanchamilas-projects.vercel.app', 'https://omni-frontend-cejdis2h9-gihanchamilas-projects.vercel.app], 
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true,
     })
